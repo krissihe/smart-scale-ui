@@ -1,0 +1,714 @@
+# Smart Scale – AI-Powered Smart Kitchen Scale
+
+Create a complete **high-fidelity, clickable Figma prototype** for **Smart Scale**, a premium AI-powered smart kitchen scale with an integrated **4.3-inch touchscreen**.
+
+Smart Scale combines precise weight measurement with an integrated camera and AI-powered food recognition. When a user places food on the scale, the camera automatically scans the food, identifies it, measures its weight, calculates calories, macronutrients, and micronutrients, and asks whether the user wants to track the food in their connected mobile app.
+
+The objective is to create a premium user experience that feels effortless, intelligent, modern, and enjoyable—comparable to Apple's design philosophy without copying Apple's UI.
+
+---
+
+# Product Vision
+
+Smart Scale should transform food tracking into a seamless experience.
+
+The interaction should require as few steps as possible while making the user feel confident that the AI is accurate and trustworthy.
+
+The experience should feel:
+
+* Premium
+* Intelligent
+* Clean
+* Minimalistic
+* Friendly
+* Fast
+* Innovative
+* Trustworthy
+* Delightful
+
+The interface should be optimized for a **4.3-inch touchscreen** with large touch targets, excellent readability, intuitive navigation, and minimal cognitive load.
+
+Create a **fully clickable prototype** with realistic interactions, animations, and screen transitions.
+
+---
+
+# Branding
+
+Product Name:
+**Smart Scale**
+
+Create a clean, premium wordmark logo for Smart Scale.
+
+Use the product name consistently throughout the prototype.
+
+Tagline:
+
+**"Your intelligent nutrition companion."**
+
+---
+
+# Design Style
+
+Create a modern interface inspired by premium consumer electronics.
+
+Design principles:
+
+* Apple-inspired simplicity
+* Clean white interface
+* Soft accent colors
+* Rounded corners (16–20 px)
+* Large typography
+* Plenty of whitespace
+* Minimal icons
+* Soft shadows
+* Elegant cards
+* Smooth animations
+* Friendly illustrations where appropriate
+
+Use a light theme only.
+
+Color Palette:
+
+Primary:
+#4CAF50
+
+Secondary:
+#0A84FF
+
+Background:
+#FFFFFF
+
+Cards:
+#F5F5F7
+
+Text:
+#1C1C1E
+
+Secondary Text:
+#6E6E73
+
+Success:
+#34C759
+
+Warning:
+#FF9500
+
+---
+
+# Typography
+
+Use SF Pro Display (or a similar clean modern font).
+
+Use a clear typography hierarchy:
+
+Large Titles
+
+Section Titles
+
+Body Text
+
+Captions
+
+Large numbers for weight and calories.
+
+---
+
+# User Journey
+
+## 1. Boot Screen
+
+When Smart Scale starts:
+
+Centered Smart Scale logo.
+
+Elegant startup animation.
+
+Soft loading indicator.
+
+Animated text:
+
+"Preparing Smart Scale..."
+
+↓
+
+"Initializing AI Camera..."
+
+↓
+
+"Loading Nutrition Database..."
+
+↓
+
+"Ready"
+
+Automatically transition after approximately three seconds.
+
+---
+
+## 2. Welcome Screen
+
+Display:
+
+Smart Scale logo
+
+Headline:
+
+"Welcome to Smart Scale"
+
+Subtitle:
+
+"The smarter way to track your nutrition."
+
+Buttons:
+
+Continue with Profile
+
+Weigh without Profile
+
+Settings
+
+---
+
+## 3. Profile Selection
+
+Show profile cards.
+
+Example users:
+
+Emily
+
+Daniel
+
+Guest
+
+Each profile contains:
+
+Avatar
+
+Name
+
+Last synchronization
+
+Goal (optional)
+
+Buttons:
+
+Continue
+
+Create New Profile
+
+Edit Profile
+
+Delete Profile
+
+---
+
+## 4. Create Profile
+
+Minimal onboarding.
+
+Fields:
+
+Profile Picture
+
+Name
+
+Fitness Goal
+
+Lose Weight
+
+Maintain Weight
+
+Build Muscle
+
+Gain Weight
+
+Daily Calorie Goal
+
+Connect Mobile App
+
+Create Profile
+
+---
+
+## 5. Login
+
+Display selected profile.
+
+Authentication options:
+
+PIN
+
+Face Recognition illustration
+
+Skip
+
+After login transition smoothly to Home Screen.
+
+---
+
+## 6. Home Screen (Idle State)
+
+Large centered weight display.
+
+Weight:
+
+0 g
+
+Friendly illustration of placing food on the scale.
+
+Headline:
+
+"Place food on the scale"
+
+Buttons:
+
+Weigh without Tracking
+
+Switch Profile
+
+History
+
+Settings
+
+Bottom status:
+
+Smart Scale Ready
+
+---
+
+## 7. Food Detection
+
+As soon as food is detected:
+
+Weight counts up smoothly.
+
+Camera activates.
+
+Animated scanning overlay.
+
+Sequence:
+
+Scanning...
+
+↓
+
+Recognizing food...
+
+↓
+
+Analyzing nutrition...
+
+↓
+
+Calculating values...
+
+↓
+
+Recognition complete
+
+Include subtle camera animation.
+
+---
+
+## 8. Recognition Result
+
+Display a large image of the recognized food.
+
+Example:
+
+🥑 Avocado
+
+Information Cards:
+
+Weight
+
+184 g
+
+Calories
+
+294 kcal
+
+Macronutrients
+
+Protein
+
+Fat
+
+Carbohydrates
+
+Fiber
+
+Micronutrients
+
+Vitamin C
+
+Vitamin K
+
+Vitamin E
+
+Potassium
+
+Magnesium
+
+Folate
+
+Recognition Confidence
+
+98%
+
+Allow user to expand/collapse micronutrients.
+
+---
+
+## 9. Confirmation Screen
+
+Headline:
+
+"We found your food!"
+
+Question:
+
+Would you like to track this food?
+
+Buttons:
+
+Track Food
+
+Edit Recognition
+
+Cancel
+
+Primary button should be visually emphasized.
+
+---
+
+## 10. Tracking Animation
+
+After pressing Track Food:
+
+Food card shrinks.
+
+Slides into smartphone illustration.
+
+Animated synchronization.
+
+Loading animation.
+
+Checkmark animation.
+
+Confetti particles (very subtle).
+
+Messages:
+
+Adding to your diary...
+
+↓
+
+Syncing with app...
+
+↓
+
+Successfully tracked!
+
+↓
+
+Daily nutrition updated.
+
+Automatically return to Home Screen.
+
+---
+
+## 11. Weigh Without Tracking
+
+When user chooses Guest Mode:
+
+Display only:
+
+Large weight
+
+Unit
+
+No nutrition information.
+
+Buttons:
+
+Done
+
+Weigh Another Item
+
+Return Home
+
+---
+
+## 12. History
+
+Display previous tracked foods.
+
+Cards include:
+
+Food image
+
+Food name
+
+Weight
+
+Calories
+
+Date
+
+Time
+
+Daily calorie total
+
+Search functionality.
+
+---
+
+## 13. Profile
+
+Display:
+
+Profile picture
+
+Name
+
+Goal
+
+Calories today
+
+Protein
+
+Fat
+
+Carbohydrates
+
+Current streak
+
+Connected App Status
+
+Buttons:
+
+Edit Profile
+
+Log Out
+
+Switch Profile
+
+---
+
+## 14. Settings
+
+Sections:
+
+Units
+
+grams
+
+ounces
+
+Language
+
+Brightness
+
+Display Timeout
+
+Wi-Fi
+
+Bluetooth
+
+Connected App
+
+Software Update
+
+Privacy
+
+Factory Reset
+
+About Smart Scale
+
+---
+
+# Animations
+
+Create smooth Smart Animate transitions.
+
+Include:
+
+Boot animation
+
+Button press animation
+
+Food scanning animation
+
+Loading indicators
+
+Success animations
+
+Card transitions
+
+Slide animations
+
+Fade transitions
+
+Scale weight counting animation
+
+Progress indicators
+
+Micro interactions throughout the interface.
+
+---
+
+# User Experience Principles
+
+Design the experience to require as few taps as possible.
+
+Prioritize:
+
+Speed
+
+Readability
+
+Accessibility
+
+Large touch targets
+
+Minimal cognitive load
+
+Friendly language
+
+Clear visual hierarchy
+
+Every screen should communicate only the information needed at that moment.
+
+---
+
+# Components
+
+Build reusable components for:
+
+Buttons
+
+Cards
+
+Food Cards
+
+Nutrition Cards
+
+Profile Cards
+
+Dialogs
+
+Modals
+
+Lists
+
+Navigation
+
+Icons
+
+Status Indicators
+
+Progress Indicators
+
+Loading Components
+
+Bottom Sheets
+
+Toast Notifications
+
+Use Auto Layout for every screen.
+
+Use reusable variables and design tokens.
+
+Follow an 8-point spacing system.
+
+---
+
+# Prototype Requirements
+
+Create a fully interactive prototype.
+
+All buttons should be clickable.
+
+Create realistic navigation between all screens.
+
+Use Smart Animate wherever appropriate.
+
+Include overlays, transitions, and modal interactions.
+
+Ensure the prototype is presentation-ready for stakeholders and suitable for usability testing.
+
+---
+
+# User Flow
+
+Design and connect the following flow:
+
+Boot Screen
+
+↓
+
+Welcome Screen
+
+↓
+
+Choose:
+
+• Continue with Profile
+
+  ↓
+
+  Profile Selection
+
+  ↓
+
+  Login
+
+  ↓
+
+  Home Screen
+
+  ↓
+
+  Place Food
+
+  ↓
+
+  AI Scanning
+
+  ↓
+
+  Recognition Result
+
+  ↓
+
+  Track Food?
+
+   ├── Track Food → Tracking Animation → Home Screen
+
+   ├── Edit Recognition → Recognition Screen
+
+   └── Cancel → Home Screen
+
+OR
+
+• Weigh without Profile
+
+  ↓
+
+  Guest Weighing Screen
+
+  ↓
+
+  Done
+
+  ↓
+
+  Welcome Screen
+
+---
+
+# Final Goal
+
+Design Smart Scale as a premium AI-powered consumer product that users instantly understand and enjoy using. The interface should feel elegant, intelligent, and effortless, combining advanced AI technology with a warm, approachable user experience. Every interaction should reinforce trust, simplicity, and delight while making nutrition tracking fast and frictionless. The final prototype should be visually polished, fully interactive, and ready for user testing and presentation to stakeholders.
