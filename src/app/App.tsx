@@ -31,7 +31,10 @@ import {
   AlertTriangle,
   Lock,
   LogOut,
+  LogIn,
   ChevronRight,
+  Power,
+  House,
 } from "lucide-react";
 import AppIconRaw from "@/imports/AppIcon/index";
 import HorizontalLogoRaw from "@/imports/HorizontalLogo/index";
@@ -57,6 +60,7 @@ type Screen =
   | "tracking-animation"
   | "success"
   | "standby"
+  | "powered-off"
   | "guest-weighing"
   | "history"
   | "profile-screen"
@@ -66,6 +70,7 @@ type Dialog =
   | "food-select"
   | "calorie-goal"
   | "guest-mode"
+  | "power-off"
   | null;
 type WeighMode = "ki" | "manual" | "scale-only";
 type GuestMode = "smart" | "scale-only";
@@ -107,8 +112,8 @@ const PROFILES: ProfileData[] = [
   },
   {
     id: "2",
-    name: "Daniel",
-    initials: "D",
+    name: "Ron",
+    initials: "R",
     goal: "Muskelaufbau",
     calories: 2800,
     lastSync: "vor 2 Tagen",
@@ -116,12 +121,21 @@ const PROFILES: ProfileData[] = [
   },
   {
     id: "3",
-    name: "Emma",
-    initials: "E",
+    name: "Michelle",
+    initials: "M",
     goal: "Gewicht halten",
     calories: 1900,
     lastSync: "vor 1 Woche",
     color: "#8B5CF6",
+  },
+  {
+    id: "4",
+    name: "Enzo",
+    initials: "E",
+    goal: "Gewicht halten",
+    calories: 2200,
+    lastSync: "heute",
+    color: "#F97316",
   },
 ];
 
@@ -389,6 +403,9 @@ const FOOD_DB: Record<string, FoodItem[]> = {
 
 const ALL_FOODS: FoodItem[] = Object.values(FOOD_DB).flat();
 
+/** Below this value, the user must confirm the detected food. */
+const MIN_CONFIDENCE_FOR_DIRECT_RESULT = 85;
+
 const CATEGORY_META: {
   key: string;
   emoji: string;
@@ -470,6 +487,10 @@ const THEME_VARS: Record<"light" | "dark", string> = {
     --c-gray1:#1C1C1E; --c-gray2:#6E6E73; --c-gray3:#AEAEB2;
     --c-card:#FFFFFF; --c-border:rgba(60,60,67,.14); --c-bg:#F7F7FA; --c-muted:#EDEEF2;
     --c-elevated:#FFFFFF; --c-input:#F2F2F7;
+    --c-overlay:rgba(247,247,250,.88);
+    --c-warning-bg:#FFF3E8; --c-warning-text:#B54708;
+    --c-tracking-device:#E5E7EB; --c-tracking-screen:#FFFFFF;
+    --c-countdown-bg:rgba(255,255,255,.94); --c-countdown-text:#1C1C1E;
     --c-btn-shadow:rgba(59,130,246,0.28); --c-ok-shadow:rgba(34,197,94,0.32);
     --c-standby-bg:#F4F4F6; --c-standby-text:#1C1C1E; --c-standby-sub:#6E6E73;
     --logo-filter:none;
@@ -481,6 +502,10 @@ const THEME_VARS: Record<"light" | "dark", string> = {
     --c-gray1:#F2F2F4; --c-gray2:#9B9BA4; --c-gray3:#6C6C75;
     --c-card:#1C1C1E; --c-border:rgba(255,255,255,.12); --c-bg:#000000; --c-muted:#2C2C2E;
     --c-elevated:#1B1D21; --c-input:#25272B;
+    --c-overlay:rgba(0,0,0,.45);
+    --c-warning-bg:rgba(20,20,22,.76); --c-warning-text:#FFFFFF;
+    --c-tracking-device:#F2F2F4; --c-tracking-screen:#2C2C2E;
+    --c-countdown-bg:rgba(10,10,20,.78); --c-countdown-text:#FFFFFF;
     --c-btn-shadow:rgba(59,130,246,0.18); --c-ok-shadow:rgba(34,197,94,0.20);
     --c-standby-bg:#0B0D10; --c-standby-text:#F2F2F4; --c-standby-sub:#6C6C75;
     --logo-filter:brightness(0) invert(1);
@@ -682,6 +707,7 @@ function StatusBar({ light }: { light?: boolean }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        background: C.bg,
         padding: "6px 18px 0",
         height: 30,
         flexShrink: 0,
@@ -720,6 +746,7 @@ function Avatar({
   color: string;
   size?: number;
 }) {
+  const usesIcon = !/^[A-Za-z]$/.test(initials);
   return (
     <div
       style={{
@@ -732,7 +759,7 @@ function Avatar({
         justifyContent: "center",
         color: "#fff",
         fontWeight: 700,
-        fontSize: size * 0.38,
+        fontSize: size * (usesIcon ? 0.56 : 0.38),
         flexShrink: 0,
       }}
     >
@@ -1546,8 +1573,8 @@ function ReturningUserScreen({
           flex: 1,
           minHeight: 0,
           display: "grid",
-          gridTemplateColumns: "1.55fr .72fr .72fr",
-          gap: 12,
+          gridTemplateColumns: "1.45fr repeat(3, .68fr)",
+          gap: 9,
         }}
       >
         <button
@@ -1556,19 +1583,19 @@ function ReturningUserScreen({
             border: `1px solid ${C.border}`,
             background: C.card,
             borderRadius: 22,
-            padding: 18,
+            padding: 14,
             cursor: "pointer",
             textAlign: "left",
             display: "flex",
             alignItems: "center",
-            gap: 18,
+            gap: 12,
             boxShadow: "0 12px 32px rgba(0,0,0,.08)",
           }}
         >
           <Avatar
             initials={primary.initials}
             color={primary.color}
-            size={88}
+            size={72}
           />
           <div>
             <div
@@ -1582,7 +1609,7 @@ function ReturningUserScreen({
             </div>
             <div
               style={{
-                fontSize: 25,
+                fontSize: 22,
                 fontWeight: 780,
                 color: C.gray1,
               }}
@@ -1620,8 +1647,8 @@ function ReturningUserScreen({
             style={{
               border: `1px solid ${C.border}`,
               background: C.card,
-              borderRadius: 20,
-              padding: 12,
+              borderRadius: 18,
+              padding: 9,
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
@@ -1633,11 +1660,11 @@ function ReturningUserScreen({
             <Avatar
               initials={p.initials}
               color={p.color}
-              size={52}
+              size={46}
             />
             <span
               style={{
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: 700,
                 color: C.gray1,
               }}
@@ -1874,6 +1901,12 @@ function CreateProfileScreen({
   const [goal, setGoal] = useState("");
   const [kcal, setKcal] = useState("");
   const [showApps, setShowApps] = useState(false);
+  const [pairingApp, setPairingApp] = useState<string | null>(null);
+  const [pairingStage, setPairingStage] = useState<
+    "select" | "qr" | "success"
+  >("select");
+  const [showIcons, setShowIcons] = useState(false);
+  const [selectedIcon, setSelectedIcon] = useState("👩");
   const [connectedApp, setConnectedApp] = useState<
     string | null
   >(null);
@@ -1883,24 +1916,43 @@ function CreateProfileScreen({
     "Muskelaufbau",
     "Leistungssport",
   ];
+  const profileIcons = [
+    { icon: "👩", label: "Frau" },
+    { icon: "👨", label: "Mann" },
+    { icon: "👧", label: "Mädchen" },
+    { icon: "👦", label: "Junge" },
+    { icon: "🧑", label: "Erwachsen" },
+    { icon: "👵", label: "Seniorin" },
+    { icon: "👴", label: "Senior" },
+    { icon: "🙂", label: "Smiley" },
+    { icon: "😎", label: "Cool" },
+    { icon: "🥦", label: "Gemüse" },
+    { icon: "🥕", label: "Karotte" },
+    { icon: "🍎", label: "Obst" },
+    { icon: "🏃", label: "Sport" },
+    { icon: "⭐", label: "Stern" },
+    { icon: "🐶", label: "Hund" },
+  ];
 
   return (
     <div
       style={{
         flex: 1,
+        minHeight: 0,
         display: "flex",
         position: "relative" as const,
+        overflow: "hidden",
+        background: C.bg,
       }}
     >
       <div
         style={{
           width: 315,
-          background: C.card,
-          borderRight: `1px solid ${C.border}`,
+          background: C.bg,
           padding: "16px 20px",
           display: "flex",
           flexDirection: "column",
-          gap: 16,
+          gap: 11,
         }}
       >
         <div
@@ -1931,6 +1983,45 @@ function CreateProfileScreen({
             Neues Profil
           </span>
         </div>
+        <button
+          onClick={() => setShowIcons(true)}
+          style={{
+            border: `1px solid ${C.border}`,
+            background: C.elevated,
+            borderRadius: 14,
+            padding: "9px 11px",
+            display: "flex",
+            alignItems: "center",
+            gap: 11,
+            cursor: "pointer",
+            textAlign: "left" as const,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              background: C.blueLt,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 27,
+              flexShrink: 0,
+            }}
+          >
+            {selectedIcon}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 750, color: C.gray1 }}>
+              Profilicon
+            </div>
+            <div style={{ fontSize: 10, color: C.gray2, marginTop: 2 }}>
+              Antippen und Icon auswählen
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4" color={C.blue} />
+        </button>
         <div>
           <label
             style={{
@@ -2014,10 +2105,13 @@ function CreateProfileScreen({
       <div
         style={{
           flex: 1,
-          padding: "16px 20px",
+          minWidth: 0,
+          minHeight: 0,
+          padding: "12px 16px",
           display: "flex",
           flexDirection: "column",
-          gap: 16,
+          gap: 9,
+          overflow: "hidden",
         }}
       >
         <div
@@ -2034,8 +2128,9 @@ function CreateProfileScreen({
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gridAutoRows: "1fr",
-            gap: 10,
+            gap: 7,
             flex: 1,
+            minHeight: 0,
           }}
         >
           {goals.map((g) => (
@@ -2050,8 +2145,8 @@ function CreateProfileScreen({
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: "pointer",
-                padding: "12px 8px",
-                minHeight: 58,
+                padding: "8px 6px",
+                minHeight: 48,
               }}
             >
               {g}
@@ -2059,11 +2154,15 @@ function CreateProfileScreen({
           ))}
         </div>
         <button
-          onClick={() => setShowApps(true)}
+          onClick={() => {
+            setPairingApp(null);
+            setPairingStage("select");
+            setShowApps(true);
+          }}
           style={{
             background: C.blueLt,
             borderRadius: 12,
-            padding: "10px 14px",
+            padding: "8px 12px",
             display: "flex",
             alignItems: "center",
             gap: 10,
@@ -2114,7 +2213,7 @@ function CreateProfileScreen({
             onCreate({
               id: `new-${Date.now()}`,
               name: name.trim(),
-              initials: name.trim().slice(0, 1).toUpperCase(),
+              initials: selectedIcon,
               goal,
               calories: Number(kcal) || 2000,
               lastSync: connectedApp
@@ -2129,6 +2228,96 @@ function CreateProfileScreen({
             padding: "11px 28px",
           }}
         />
+        {showIcons && (
+          <div
+            style={{
+              position: "absolute" as const,
+              inset: 10,
+              zIndex: 30,
+              borderRadius: 20,
+              background: C.elevated,
+              border: `1px solid ${C.border}`,
+              boxShadow: "0 20px 60px rgba(0,0,0,.24)",
+              padding: 18,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: C.gray1 }}>
+                  Profilicon auswählen
+                </div>
+                <div style={{ fontSize: 11, color: C.gray2 }}>
+                  Personen, Smileys und weitere Symbole
+                </div>
+              </div>
+              <button
+                onClick={() => setShowIcons(false)}
+                aria-label="Icon-Auswahl schließen"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: C.muted,
+                  color: C.gray1,
+                  cursor: "pointer",
+                }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div
+              className="ss-nutrition-scroll"
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 1fr)",
+                gap: 9,
+                paddingRight: 5,
+              }}
+            >
+              {profileIcons.map((option) => (
+                <button
+                  key={`${option.icon}-${option.label}`}
+                  onClick={() => {
+                    setSelectedIcon(option.icon);
+                    setShowIcons(false);
+                  }}
+                  style={{
+                    minHeight: 68,
+                    borderRadius: 14,
+                    border: `2px solid ${
+                      selectedIcon === option.icon ? C.blue : C.border
+                    }`,
+                    background:
+                      selectedIcon === option.icon ? C.blueLt : C.card,
+                    color: C.gray1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                  aria-label={option.label}
+                >
+                  <span style={{ fontSize: 34 }}>{option.icon}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {showApps && (
           <div
             style={{
@@ -2159,10 +2348,18 @@ function CreateProfileScreen({
                     color: C.gray1,
                   }}
                 >
-                  Tracking-App verbinden
+                  {pairingStage === "select"
+                    ? "Tracking-App auswählen"
+                    : pairingStage === "qr"
+                      ? `${pairingApp} verbinden`
+                      : "Verknüpfung erfolgreich"}
                 </div>
                 <div style={{ fontSize: 11, color: C.gray2 }}>
-                  Du kannst diesen Schritt jederzeit nachholen.
+                  {pairingStage === "select"
+                    ? "Wähle die App aus, die du verbinden möchtest."
+                    : pairingStage === "qr"
+                      ? "Scanne den QR-Code mit deinem Handy."
+                      : `${pairingApp} ist jetzt mit deinem Profil verbunden.`}
                 </div>
               </div>
               <button
@@ -2181,64 +2378,198 @@ function CreateProfileScreen({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 10,
-                flex: 1,
-              }}
-            >
-              {[
-                { name: "YAZIO", color: "#6C5CE7" },
-                { name: "MyFitnessPal", color: "#0072CE" },
-                { name: "Weitere Apps", color: C.gray2 },
-              ].map((app) => (
-                <button
-                  key={app.name}
-                  onClick={() => {
-                    setConnectedApp(app.name);
-                    setShowApps(false);
-                  }}
+            {pairingStage === "select" && (
+              <>
+                <div
                   style={{
-                    border: `1px solid ${C.border}`,
-                    background: C.card,
-                    borderRadius: 16,
-                    cursor: "pointer",
-                    color: C.gray1,
-                    fontWeight: 700,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
                     gap: 10,
+                    flex: 1,
                   }}
                 >
+                  {[
+                    { name: "YAZIO", color: "#6C5CE7" },
+                    { name: "MyFitnessPal", color: "#0072CE" },
+                    { name: "Weitere Apps", color: C.gray2 },
+                  ].map((app) => (
+                    <button
+                      key={app.name}
+                      onClick={() => {
+                        setPairingApp(app.name);
+                        setPairingStage("qr");
+                      }}
+                      style={{
+                        border: `1px solid ${C.border}`,
+                        background: C.card,
+                        borderRadius: 16,
+                        cursor: "pointer",
+                        color: C.gray1,
+                        fontWeight: 700,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 14,
+                          background: app.color,
+                          color: "#fff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 18,
+                          fontWeight: 800,
+                        }}
+                      >
+                        {app.name[0]}
+                      </div>
+                      {app.name}
+                    </button>
+                  ))}
+                </div>
+                <GhostBtn
+                  label="Ohne App fortfahren"
+                  onClick={() => setShowApps(false)}
+                  style={{ alignSelf: "center" }}
+                />
+              </>
+            )}
+
+            {pairingStage === "qr" && (
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 34,
+                }}
+              >
+                <div
+                  aria-label="QR-Code Platzhalter"
+                  style={{
+                    width: 164,
+                    height: 164,
+                    padding: 10,
+                    borderRadius: 16,
+                    background: "#fff",
+                    border: `1px solid ${C.border}`,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(11, 1fr)",
+                    gridTemplateRows: "repeat(11, 1fr)",
+                    gap: 1,
+                    boxShadow: "0 10px 28px rgba(0,0,0,.12)",
+                  }}
+                >
+                  {Array.from({ length: 121 }, (_, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        background:
+                          index % 3 === 0 ||
+                          index % 7 === 0 ||
+                          (index * 5 + 3) % 11 < 4
+                            ? "#111"
+                            : "#fff",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ width: 230 }}>
+                  <Smartphone
+                    className="w-8 h-8"
+                    color={C.blue}
+                  />
                   <div
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 14,
-                      background: app.color,
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 18,
+                      marginTop: 10,
+                      fontSize: 16,
                       fontWeight: 800,
+                      color: C.gray1,
                     }}
                   >
-                    {app.name[0]}
+                    Mit dem Handy scannen
                   </div>
-                  {app.name}
-                </button>
-              ))}
-            </div>
-            <GhostBtn
-              label="Ohne App fortfahren"
-              onClick={() => setShowApps(false)}
-              style={{ alignSelf: "center" }}
-            />
+                  <div
+                    style={{
+                      margin: "5px 0 14px",
+                      fontSize: 11,
+                      lineHeight: 1.45,
+                      color: C.gray2,
+                    }}
+                  >
+                    Öffne {pairingApp} auf deinem Handy und scanne
+                    diesen Code, um die Verbindung freizugeben.
+                  </div>
+                  <PrimaryBtn
+                    label="QR-Scan simulieren"
+                    onClick={() => {
+                      setConnectedApp(pairingApp);
+                      setPairingStage("success");
+                    }}
+                  />
+                  <GhostBtn
+                    label="Andere App wählen"
+                    onClick={() => setPairingStage("select")}
+                    style={{ paddingLeft: 0, marginTop: 9 }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {pairingStage === "success" && (
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center" as const,
+                }}
+              >
+                <div
+                  style={{
+                    width: 76,
+                    height: 76,
+                    borderRadius: "50%",
+                    background: C.greenLt,
+                    color: C.green,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    animation: "popIn .45s ease",
+                  }}
+                >
+                  <Check className="w-10 h-10" strokeWidth={3} />
+                </div>
+                <div
+                  style={{
+                    marginTop: 14,
+                    fontSize: 21,
+                    fontWeight: 850,
+                    color: C.green,
+                  }}
+                >
+                  Verknüpfung erfolgreich
+                </div>
+                <div style={{ marginTop: 5, fontSize: 12, color: C.gray2 }}>
+                  {pairingApp} ist verbunden. Du kannst dein Profil
+                  jetzt erstellen.
+                </div>
+                <PrimaryBtn
+                  label="Weiter zum Profil"
+                  onClick={() => setShowApps(false)}
+                  style={{ marginTop: 18 }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -2456,8 +2787,12 @@ function HomeScreen({
   onScaleOnly,
   onHistory,
   onProfile,
+  onSwitchProfile,
+  onLogout,
   onSettings,
+  onPowerOff,
 }: any) {
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const modes = [
     {
       key: "ki",
@@ -2560,22 +2895,111 @@ function HomeScreen({
             gap: 6,
           }}
         >
-          <button
-            onClick={onProfile}
-            style={{
-              height: 24,
-              border: "none",
-              background: C.muted,
-              borderRadius: 999,
-              padding: "0 10px",
-              fontSize: 10,
-              fontWeight: 800,
-              color: C.gray1,
-              cursor: "pointer",
-            }}
-          >
-            {profile ? profile.name : "Gast"}
-          </button>
+          <div style={{ position: "relative" as const }}>
+            <button
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              aria-label="Profilmenü öffnen"
+              aria-expanded={profileMenuOpen}
+              style={{
+                height: 24,
+                border: `1px solid ${C.border}`,
+                background: C.card,
+                borderRadius: 999,
+                padding: "0 9px 0 5px",
+                fontSize: 10,
+                fontWeight: 800,
+                color: C.gray1,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              {profile ? (
+                <Avatar
+                  initials={profile.initials}
+                  color={profile.color}
+                  size={17}
+                />
+              ) : (
+                <User className="w-3 h-3" />
+              )}
+              {profile ? profile.name : "Gast"}
+              <ChevronRight
+                className="w-3 h-3"
+                style={{
+                  transform: profileMenuOpen
+                    ? "rotate(90deg)"
+                    : "rotate(0deg)",
+                  transition: "transform .2s ease",
+                }}
+              />
+            </button>
+
+            {profileMenuOpen && (
+              <div
+                style={{
+                  position: "absolute" as const,
+                  top: 29,
+                  right: 0,
+                  width: 168,
+                  padding: 6,
+                  borderRadius: 13,
+                  background: C.elevated,
+                  border: `1px solid ${C.border}`,
+                  boxShadow: "0 12px 30px rgba(0,0,0,.16)",
+                  zIndex: 100,
+                }}
+              >
+                {[
+                  {
+                    label: "Profil ansehen",
+                    icon: <User className="w-3.5 h-3.5" />,
+                    action: onProfile,
+                    color: C.gray1,
+                  },
+                  {
+                    label: "Profil wechseln",
+                    icon: <RefreshCw className="w-3.5 h-3.5" />,
+                    action: onSwitchProfile,
+                    color: C.blue,
+                  },
+                  {
+                    label: "Logout",
+                    icon: <LogOut className="w-3.5 h-3.5" />,
+                    action: onLogout,
+                    color: C.red,
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      item.action();
+                    }}
+                    style={{
+                      width: "100%",
+                      height: 32,
+                      padding: "0 9px",
+                      border: "none",
+                      borderRadius: 9,
+                      background: "transparent",
+                      color: item.color,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 11,
+                      fontWeight: 750,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button
             onClick={onSettings}
@@ -2594,6 +3018,25 @@ function HomeScreen({
             }}
           >
             <Settings className="w-3 h-3" />
+          </button>
+
+          <button
+            onClick={onPowerOff}
+            aria-label="Gerät ausschalten"
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              border: "none",
+              background: C.muted,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: C.red,
+            }}
+          >
+            <Power className="w-3 h-3" />
           </button>
         </div>
       </div>
@@ -3038,6 +3481,7 @@ function FoodDetectionScreen({
 }) {
   const [progress, setProgress] = useState(0);
   const [weight, setWeight] = useState(0);
+  const [weightStable, setWeightStable] = useState(false);
 
   const foodRef = useRef<FoodItem>(
     ALL_FOODS[Math.floor(Math.random() * ALL_FOODS.length)],
@@ -3047,6 +3491,8 @@ function FoodDetectionScreen({
   );
 
   useEffect(() => {
+    if (!weightStable) return;
+
     const progressTimer = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) return 100;
@@ -3065,25 +3511,29 @@ function FoodDetectionScreen({
       clearInterval(progressTimer);
       clearTimeout(finishTimer);
     };
-  }, [onDone]);
+  }, [onDone, weightStable]);
 
   useEffect(() => {
     const weightTimer = setInterval(() => {
-      setWeight((w) =>
-        w < weightRef.current
-          ? Math.min(
-              w + Math.ceil(weightRef.current / 22),
-              weightRef.current,
-            )
-          : weightRef.current,
-      );
+      setWeight((w) => {
+        const next = Math.min(
+          w + Math.ceil(weightRef.current / 22),
+          weightRef.current,
+        );
+        if (next >= weightRef.current) {
+          clearInterval(weightTimer);
+          setWeightStable(true);
+        }
+        return next;
+      });
     }, 80);
 
     return () => clearInterval(weightTimer);
   }, []);
 
-  const statusText =
-    progress < 30
+  const statusText = !weightStable
+    ? "Gewicht wird stabilisiert..."
+    : progress < 30
       ? "Kamera wird vorbereitet..."
       : progress < 65
         ? "Lebensmittel wird analysiert..."
@@ -3127,7 +3577,11 @@ function FoodDetectionScreen({
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: isDone ? C.green : C.blue,
+              background: !weightStable
+                ? C.gray3
+                : isDone
+                  ? C.green
+                  : C.blue,
             }}
           />
           <span
@@ -3137,7 +3591,9 @@ function FoodDetectionScreen({
               color: C.gray2,
             }}
           >
-            {isDone
+            {!weightStable
+              ? "Gewicht wird ermittelt"
+              : isDone
               ? "Erkennung abgeschlossen"
               : "KI-Erkennung läuft"}
           </span>
@@ -3237,7 +3693,13 @@ function FoodDetectionScreen({
                 width: 165,
                 height: 165,
                 borderRadius: "50%",
-                border: `2px solid ${isDone ? C.green : C.blue}`,
+                border: `2px solid ${
+                  !weightStable
+                    ? C.gray3
+                    : isDone
+                      ? C.green
+                      : C.blue
+                }`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -3272,7 +3734,7 @@ function FoodDetectionScreen({
                 ) : (
                   <Camera
                     className="w-10 h-10"
-                    color={C.blue}
+                    color={weightStable ? C.blue : C.gray3}
                   />
                 )}
               </div>
@@ -3346,7 +3808,9 @@ function FoodDetectionScreen({
               color: C.gray1,
             }}
           >
-            Lebensmittel wird erkannt
+            {weightStable
+              ? "Lebensmittel wird erkannt"
+              : "Gewicht wird ermittelt"}
           </h2>
 
           <p
@@ -3357,8 +3821,9 @@ function FoodDetectionScreen({
               color: C.gray2,
             }}
           >
-            Die KI analysiert dein Lebensmittel und berechnet
-            die passenden Nährwerte.
+            {weightStable
+              ? "Die KI analysiert dein Lebensmittel und berechnet die passenden Nährwerte."
+              : "Bitte kurz warten, bis die Grammzahl stabil ermittelt wurde."}
           </p>
 
           <div
@@ -3373,7 +3838,11 @@ function FoodDetectionScreen({
               style={{
                 fontSize: 12,
                 fontWeight: 800,
-                color: isDone ? C.green : C.blue,
+                color: !weightStable
+                  ? C.gray2
+                  : isDone
+                    ? C.green
+                    : C.blue,
               }}
             >
               {statusText}
@@ -3386,7 +3855,7 @@ function FoodDetectionScreen({
                 color: isDone ? C.green : C.gray1,
               }}
             >
-              {progress}%
+              {weightStable ? `${progress}%` : "–"}
             </span>
           </div>
 
@@ -3403,7 +3872,11 @@ function FoodDetectionScreen({
               style={{
                 width: `${progress}%`,
                 height: "100%",
-                background: isDone ? C.green : C.blue,
+              background: !weightStable
+                ? C.gray3
+                : isDone
+                  ? C.green
+                  : C.blue,
                 borderRadius: 999,
                 transition:
                   "width 0.2s ease, background 0.3s ease",
@@ -3490,9 +3963,9 @@ function LowConfidenceScreen({
               position: "absolute" as const,
               top: 10,
               left: 10,
-              background: "rgba(20,20,22,.76)",
+              background: "var(--c-warning-bg)",
               backdropFilter: "blur(10px)",
-              color: "#fff",
+              color: "var(--c-warning-text)",
               borderRadius: 999,
               padding: "6px 9px",
               fontSize: 10,
@@ -3738,7 +4211,6 @@ function RecognitionResultScreen({
           alignItems: "center",
           justifyContent: "space-between",
           padding: "0 14px",
-          borderBottom: `1px solid ${C.border}`,
         }}
       >
         <div
@@ -3800,12 +4272,12 @@ function RecognitionResultScreen({
         {/* Left Food Card */}
         <div
           style={{
-            width: 218,
+            width: 246,
             flexShrink: 0,
             background: C.card,
             border: `1px solid ${C.border}`,
             borderRadius: 20,
-            padding: 12,
+            padding: "12px 15px",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
@@ -3831,7 +4303,7 @@ function RecognitionResultScreen({
 
           <div
             style={{
-              marginTop: 10,
+              marginTop: 9,
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -3899,9 +4371,10 @@ function RecognitionResultScreen({
           <div
             style={{
               marginTop: "auto",
+              paddingTop: 14,
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: 7,
+              gap: 9,
             }}
           >
             <div
@@ -3909,7 +4382,7 @@ function RecognitionResultScreen({
                 background: C.elevated,
                 border: `1px solid ${C.border}`,
                 borderRadius: 14,
-                padding: "9px 10px",
+                padding: "8px 11px",
               }}
             >
               <div
@@ -3949,7 +4422,7 @@ function RecognitionResultScreen({
                 background: C.blueLt,
                 border: `1px solid ${C.border}`,
                 borderRadius: 14,
-                padding: "9px 10px",
+                padding: "8px 11px",
               }}
             >
               <div
@@ -3964,7 +4437,7 @@ function RecognitionResultScreen({
               </div>
               <div
                 style={{
-                  marginTop: 4,
+                  marginTop: 5,
                   fontSize: 23,
                   fontWeight: 850,
                   color: C.blue,
@@ -3985,11 +4458,46 @@ function RecognitionResultScreen({
             </div>
           </div>
 
+          {isGuest ? (
+            <div style={{ marginTop: 10 }}>
+              <PrimaryBtn
+                label="Tracking nur mit Profil"
+                disabled
+                style={{
+                  width: "100%",
+                  height: 34,
+                  padding: 0,
+                }}
+              />
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 9,
+                  color: C.gray2,
+                  textAlign: "center" as const,
+                }}
+              >
+                Im Gastmodus werden keine Daten übertragen.
+              </div>
+            </div>
+          ) : (
+            <PrimaryBtn
+              label="Zur App übertragen"
+              onClick={onSave}
+              style={{
+                width: "100%",
+                height: 34,
+                padding: 0,
+                marginTop: 12,
+              }}
+            />
+          )}
+
           <button
             onClick={onChangeFood}
             style={{
-              marginTop: 10,
-              height: 36,
+              marginTop: 9,
+              height: 34,
               borderRadius: 13,
               border: `1px solid ${C.border}`,
               background: C.elevated,
@@ -4005,21 +4513,33 @@ function RecognitionResultScreen({
 
         {/* Right Nutrition Card */}
         <div
-          className="ss-nutrition-scroll"
           style={{
             flex: 1,
             minWidth: 0,
+            minHeight: 0,
+            alignSelf: "stretch",
+            position: "relative" as const,
             background: C.elevated,
             border: `1px solid ${C.border}`,
             borderRadius: 20,
-            padding: "16px 18px 18px",
-            display: "flex",
-            flexDirection: "column",
-            overflowY: "auto" as const,
-            overflowX: "hidden" as const,
-            scrollbarGutter: "stable",
+            overflow: "hidden",
           }}
         >
+          <div
+            className={expanded ? "ss-nutrition-scroll" : undefined}
+            style={{
+              position: "absolute" as const,
+              inset: 0,
+              padding: "13px 18px 14px",
+              overflowY: expanded ? "scroll" : "hidden",
+              overflowX: "hidden" as const,
+              overscrollBehaviorY: "contain" as const,
+              WebkitOverflowScrolling: "touch",
+              touchAction: "pan-y",
+              scrollbarGutter: "stable",
+              scrollbarColor: `${C.gray3} ${C.muted}`,
+            }}
+          >
           <div
             style={{
               display: "flex",
@@ -4038,22 +4558,45 @@ function RecognitionResultScreen({
             >
               Nährwerte
             </h2>
-            <span
+            <div
               style={{
-                fontSize: 11,
-                fontWeight: 800,
-                color: C.gray2,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
               }}
             >
-              pro Portion
-            </span>
+              {expanded && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: C.blue,
+                    background: C.blueLt,
+                    borderRadius: 999,
+                    padding: "4px 8px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ↓ scrollen
+                </span>
+              )}
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: C.gray2,
+                }}
+              >
+                pro Portion
+              </span>
+            </div>
           </div>
 
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 9,
+              gap: 7,
             }}
           >
             {macroItems.map((item) => (
@@ -4063,8 +4606,8 @@ function RecognitionResultScreen({
 
           <div
             style={{
-              marginTop: 12,
-              paddingTop: 10,
+              marginTop: 9,
+              paddingTop: 7,
               borderTop: `1px solid ${C.border}`,
             }}
           >
@@ -4074,7 +4617,7 @@ function RecognitionResultScreen({
                 fontWeight: 850,
                 color: C.gray3,
                 letterSpacing: 1.1,
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               WEITERE NÄHRWERTE
@@ -4088,8 +4631,8 @@ function RecognitionResultScreen({
           <button
             onClick={() => setExpanded((e) => !e)}
             style={{
-              marginTop: 12,
-              height: 38,
+              marginTop: 9,
+              height: 36,
               background: C.card,
               border: `1px solid ${C.border}`,
               borderRadius: 13,
@@ -4228,53 +4771,6 @@ function RecognitionResultScreen({
             </div>
           )}
 
-          <div
-            style={{
-              marginTop: 14,
-              flexShrink: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 7,
-            }}
-          >
-            {isGuest ? (
-              <>
-                <PrimaryBtn
-                  label="Tracking nur mit Benutzerprofil möglich"
-                  disabled
-                  style={{
-                    width: "100%",
-                    height: 36,
-                    padding: 0,
-                  }}
-                />
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: C.gray2,
-                    textAlign: "center" as const,
-                  }}
-                >
-                  Im Gastmodus werden keine Daten übertragen.
-                </div>
-              </>
-            ) : (
-              <PrimaryBtn
-                label="Zur App übertragen"
-                onClick={onSave}
-                style={{
-                  width: "100%",
-                  height: 36,
-                  padding: 0,
-                }}
-              />
-            )}
-
-            <GhostBtn
-              label="Abbrechen"
-              onClick={onCancel}
-              style={{ width: "100%", padding: "5px 0" }}
-            />
           </div>
         </div>
       </div>
@@ -4545,37 +5041,36 @@ function TrackingAnimationScreen({
   food: FoodItem;
   onDone: () => void;
 }) {
-  const [step, setStep] = useState(0);
-  const [shrink, setShrink] = useState(false);
-  const [done, setDone] = useState(false);
-  const steps = [
-    "Wird gespeichert…",
-    "Kalorien werden berechnet…",
-    "Protokoll wird aktualisiert…",
-    "Erfolgreich gespeichert!",
-  ];
+  const [elapsed, setElapsed] = useState(0);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const duration = 7000;
+  const progress = Math.min(100, (elapsed / duration) * 100);
+  const phase = elapsed < 2200 ? 0 : elapsed < 4300 ? 1 : 2;
+  const rawTransferProgress = Math.min(
+    1,
+    Math.max(0, (elapsed - 2200) / 2100),
+  );
+  const transferProgress =
+    1 - Math.pow(1 - rawTransferProgress, 3);
+  const message =
+    phase === 0
+      ? "Lebensmittel wird für die Übertragung vorbereitet…"
+      : phase === 1
+        ? "Nährwerte werden sicher an die App übertragen…"
+        : "Erfolgreich in deiner App gespeichert!";
 
   useEffect(() => {
-    const timers = [
-      setTimeout(() => {
-        setStep(1);
-      }, 400),
-      setTimeout(() => {
-        setStep(2);
-        setShrink(true);
-      }, 900),
-      setTimeout(() => {
-        setStep(3);
-      }, 1500),
-      setTimeout(() => {
-        setDone(true);
-      }, 2000),
-      setTimeout(() => {
-        onDone();
-      }, 3000),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [onDone]);
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.min(duration, Date.now() - startedAt));
+    }, 16);
+    const finishTimer = setTimeout(() => onDoneRef.current(), duration);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(finishTimer);
+    };
+  }, []);
 
   return (
     <div
@@ -4585,112 +5080,157 @@ function TrackingAnimationScreen({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 24,
+        gap: 14,
         background: C.bg,
       }}
     >
       <div
         style={{
           position: "relative" as const,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 32,
+          width: 390,
+          maxWidth: "90%",
+          height: 170,
         }}
       >
         <div
           style={{
-            width: shrink ? 60 : 100,
-            height: shrink ? 60 : 100,
-            borderRadius: shrink ? 12 : 20,
+            position: "absolute" as const,
+            left: "9%",
+            top: 25,
+            width: 112,
+            height: 112,
+            borderRadius: 24,
             background: C.card,
             border: `2px solid ${C.border}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: shrink ? 32 : 56,
-            transition:
-              "all 0.6s cubic-bezier(0.34,1.56,0.64,1)",
-            transform: shrink
-              ? "translateX(60px) scale(0.6)"
-              : "none",
-            opacity: shrink ? 0 : 1,
+            fontSize: 62,
+            transform: `translate(${170 * transferProgress}px, ${5 * transferProgress}px) scale(${1 - 0.68 * transferProgress})`,
+            opacity:
+              rawTransferProgress > 0.88
+                ? Math.max(
+                    0,
+                    (1 - rawTransferProgress) / 0.12,
+                  )
+                : 1,
+            willChange: "transform, opacity",
+            zIndex: 2,
           }}
         >
           {food.emoji}
         </div>
         <div
           style={{
-            width: 48,
-            height: 80,
-            borderRadius: 10,
-            background: C.gray1,
+            position: "absolute" as const,
+            left: phase >= 2 ? "50%" : "67%",
+            top: phase >= 2 ? 4 : 15,
+            width: 86,
+            height: 142,
+            borderRadius: 19,
+            background: "var(--c-tracking-device)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            position: "relative" as const,
+            transform:
+              phase >= 2
+                ? "translateX(-50%) scale(1.12)"
+                : "translateX(-50%) scale(1)",
+            transition:
+              "all 1.1s cubic-bezier(0.34,1.2,0.64,1)",
+            boxShadow: "0 14px 34px rgba(0,0,0,.16)",
           }}
         >
           <div
             style={{
-              width: 36,
-              height: 60,
-              borderRadius: 6,
-              background: "#2C2C2E",
-            }}
-          />
-          {shrink && (
-            <div
-              style={{
-                position: "absolute" as const,
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%,-50%)",
-                fontSize: 20,
-              }}
-            >
-              {food.emoji}
-            </div>
-          )}
-        </div>
-      </div>
-      {done ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              background: C.green,
+              width: 70,
+              height: 116,
+              borderRadius: 12,
+              background: "var(--c-tracking-screen)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Check className="w-7 h-7" />
+          {phase >= 2 && (
+            <div
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: "50%",
+                background: C.green,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                animation: "popIn .5s ease",
+              }}
+            >
+              <Check className="w-7 h-7" color="#fff" strokeWidth={3} />
+            </div>
+          )}
           </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          minHeight: 42,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 4,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: phase >= 2 ? 750 : 650,
+            color: phase >= 2 ? C.green : C.gray1,
+            textAlign: "center" as const,
+          }}
+        >
+          {message}
+        </div>
+        <div style={{ fontSize: 11, color: C.gray2 }}>
+          {phase < 2 ? "Bitte einen Moment warten" : food.name}
+        </div>
+      </div>
+
+      <div style={{ width: 340, maxWidth: "78%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 6,
+            fontSize: 11,
+            fontWeight: 700,
+            color: C.gray2,
+          }}
+        >
+          <span>Übertragung</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div
+          style={{
+            height: 9,
+            borderRadius: 999,
+            background: C.muted,
+            overflow: "hidden",
+            border: `1px solid ${C.border}`,
+          }}
+        >
           <div
             style={{
-              fontSize: 18,
-              fontWeight: 700,
-              color: C.green,
+              width: `${progress}%`,
+              height: "100%",
+              borderRadius: 999,
+              background: phase >= 2 ? C.green : C.blue,
+              transition: "background-color .4s ease",
             }}
-          >
-            Erfolgreich gespeichert!
-          </div>
+          />
         </div>
-      ) : (
-        <div style={{ fontSize: 14, color: C.gray2 }}>
-          {steps[step]}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -4704,10 +5244,12 @@ function SuccessScreen({
   food: FoodItem;
   onDone: () => void;
 }) {
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
-    const t = setTimeout(() => onDone(), 2500);
+    const t = setTimeout(() => onDoneRef.current(), 2500);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, []);
 
   return (
     <div
@@ -4918,41 +5460,390 @@ function GuestWeighingScreen({
   weight,
   onDone,
   onNew,
+  onBack,
+  onLogin,
 }: {
   guestMode: GuestMode;
   food: FoodItem | null;
   weight: number;
   onDone: () => void;
   onNew: () => void;
+  onBack: () => void;
+  onLogin: () => void;
 }) {
   const [unit, setUnit] = useState<"g" | "oz">("g");
+  const [taraActive, setTaraActive] = useState(false);
+  const [taraFeedback, setTaraFeedback] = useState(false);
+  const taraFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  useEffect(() => {
+    return () => {
+      if (taraFeedbackTimer.current) {
+        clearTimeout(taraFeedbackTimer.current);
+      }
+    };
+  }, []);
+
+  const handleTara = () => {
+    setTaraActive(true);
+    setTaraFeedback(true);
+    if (taraFeedbackTimer.current) {
+      clearTimeout(taraFeedbackTimer.current);
+    }
+    taraFeedbackTimer.current = setTimeout(
+      () => setTaraFeedback(false),
+      850,
+    );
+  };
   const displayed =
     unit === "g"
       ? weight
       : Math.round(weight * 0.03527 * 10) / 10;
 
-  return (
-    <div style={{ flex: 1, display: "flex" }}>
+  if (guestMode === "scale-only") {
+    return (
       <div
         style={{
-          width: 380,
-          background: C.card,
-          borderRight: `1px solid ${C.border}`,
-          padding: 24,
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          background: C.bg,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: 36,
+            flexShrink: 0,
+            padding: "0 12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <button
+            onClick={onBack}
+            style={{
+              height: 27,
+              padding: "0 10px",
+              border: "none",
+              borderRadius: 10,
+              background: C.muted,
+              color: C.gray1,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 10,
+              fontWeight: 750,
+              cursor: "pointer",
+            }}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" /> Zurück
+          </button>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              fontWeight: 800,
+              color: C.gray2,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: C.green,
+              }}
+            />
+            Bereit zum Wiegen
+          </div>
+
+          <button
+            onClick={onLogin}
+            style={{
+              height: 27,
+              padding: "0 11px",
+              border: `1px solid ${C.blue}`,
+              borderRadius: 10,
+              background: C.blueLt,
+              color: C.blue,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 10,
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            <LogIn className="w-3.5 h-3.5" /> Einloggen
+          </button>
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: "8px 18px 13px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, color: C.gray3 }}>
+              AKTUELLES GEWICHT
+            </div>
+            <div
+              style={{
+                marginTop: 4,
+                display: "flex",
+                alignItems: "baseline",
+                gap: 7,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 76,
+                  lineHeight: 0.95,
+                  fontWeight: 900,
+                  letterSpacing: "-0.06em",
+                  color: C.gray1,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {taraActive ? 0 : displayed}
+              </span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: C.gray3 }}>
+                {unit}
+              </span>
+            </div>
+
+            <div
+              style={{
+                marginTop: 12,
+                padding: 3,
+                borderRadius: 12,
+                background: C.muted,
+                display: "flex",
+                gap: 3,
+              }}
+            >
+              {(["g", "oz"] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setUnit(u)}
+                  style={{
+                    width: 62,
+                    height: 27,
+                    border: "none",
+                    borderRadius: 9,
+                    background: unit === u ? C.blue : "transparent",
+                    color: unit === u ? "#fff" : C.gray2,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 14, display: "flex", gap: 9 }}>
+              <button
+                onClick={handleTara}
+                style={{
+                  minWidth: 116,
+                  height: 42,
+                  borderRadius: 14,
+                  border: `1.5px solid ${taraFeedback ? C.green : C.border}`,
+                  background: taraFeedback ? C.greenLt : C.card,
+                  color: taraFeedback ? C.green : C.gray1,
+                  fontSize: 13,
+                  fontWeight: 850,
+                  cursor: "pointer",
+                  transition:
+                    "background-color .2s ease, color .2s ease, border-color .2s ease, transform .15s ease",
+                  transform: taraFeedback ? "scale(.97)" : "scale(1)",
+                }}
+              >
+                {taraFeedback ? "✓ TARA gesetzt" : "TARA"}
+              </button>
+              <button
+                onClick={onBack}
+                style={{
+                  minWidth: 116,
+                  height: 42,
+                  borderRadius: 14,
+                  border: `1px solid ${C.border}`,
+                  background: C.card,
+                  color: C.gray1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 7,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                <House className="w-4 h-4" /> Home
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              minHeight: 40,
+              padding: "0 14px",
+              borderRadius: 13,
+              background: C.blueLt,
+              border: `1px solid ${C.border}`,
+              color: C.blue,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontSize: 11,
+              fontWeight: 750,
+            }}
+          >
+            <Info className="w-4 h-4" />
+            Nur Gewichtsmessung – keine Lebensmittel- oder Nährwertanalyse
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: C.bg,
+      }}
+    >
+      <div
+        style={{
+          height: 42,
+          flexShrink: 0,
+          padding: "0 14px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <button
+          onClick={onBack}
+          style={{
+            height: 30,
+            padding: "0 11px",
+            border: "none",
+            borderRadius: 11,
+            background: C.muted,
+            color: C.gray1,
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            fontSize: 11,
+            fontWeight: 750,
+            cursor: "pointer",
+          }}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" /> Zurück
+        </button>
+        <div style={{ fontSize: 12, fontWeight: 800, color: C.gray1 }}>
+          Direkt wiegen
+        </div>
+        <button
+          onClick={onLogin}
+          style={{
+            height: 30,
+            padding: "0 12px",
+            border: `1px solid ${C.blue}`,
+            borderRadius: 11,
+            background: C.blueLt,
+            color: C.blue,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 11,
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          <LogIn className="w-3.5 h-3.5" /> Einloggen
+        </button>
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
+      <div
+        style={{
+          width: 330,
+          margin: "0 0 14px 14px",
+          background: C.elevated,
+          border: `1px solid ${C.border}`,
+          borderRadius: 22,
+          padding: "18px 22px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 20,
+          gap: 13,
         }}
       >
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 17,
+            background: C.blueLt,
+            color: C.blue,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Scale className="w-7 h-7" />
+        </div>
         <div style={{ textAlign: "center" as const }}>
           <div
             style={{
-              fontSize: 56,
+              marginBottom: 5,
+              fontSize: 10,
+              fontWeight: 850,
+              letterSpacing: 1.2,
+              color: C.gray3,
+            }}
+          >
+            AKTUELLES GEWICHT
+          </div>
+          <div
+            style={{
+              fontSize: 68,
               fontWeight: 900,
               color: C.gray1,
-              lineHeight: 1,
+              lineHeight: 0.95,
+              letterSpacing: "-0.05em",
             }}
           >
             {displayed}
@@ -4962,7 +5853,7 @@ function GuestWeighingScreen({
               display: "flex",
               gap: 8,
               justifyContent: "center",
-              marginTop: 10,
+              marginTop: 12,
             }}
           >
             {(["g", "oz"] as const).map((u) => (
@@ -4973,7 +5864,7 @@ function GuestWeighingScreen({
                   padding: "4px 14px",
                   borderRadius: 8,
                   border: `1.5px solid ${unit === u ? C.blue : C.border}`,
-                  background: unit === u ? C.blueLt : "#fff",
+                  background: unit === u ? C.blueLt : C.card,
                   color: unit === u ? C.blue : C.gray2,
                   fontWeight: 600,
                   fontSize: 13,
@@ -4985,24 +5876,29 @@ function GuestWeighingScreen({
             ))}
           </div>
         </div>
-        <ScaleIllustration width={240} />
         <div
           style={{
-            fontSize: 12,
-            color: C.gray3,
+            padding: "6px 10px",
+            borderRadius: 999,
+            background: C.greenLt,
+            fontSize: 10,
+            fontWeight: 750,
+            color: C.green,
             display: "flex",
             alignItems: "center",
             gap: 6,
           }}
         >
-          <User className="w-3 h-3" />
-          Kein Profil · Kein Tracking
+          <Check className="w-3 h-3" /> Gewicht stabil
+        </div>
+        <div style={{ fontSize: 10, color: C.gray3 }}>
+          Ohne Profil wird diese Messung nicht gespeichert.
         </div>
       </div>
       <div
         style={{
           flex: 1,
-          padding: 24,
+          padding: "10px 18px 18px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -5113,6 +6009,7 @@ function GuestWeighingScreen({
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
@@ -5665,12 +6562,14 @@ function ProfileScreenView({
   onBack,
   onOpenCalorieGoal,
   onProfileSelect,
+  onLogout,
 }: {
   profile: ProfileData;
   calorieGoal: number;
   onBack: () => void;
   onOpenCalorieGoal: () => void;
   onProfileSelect: () => void;
+  onLogout: () => void;
 }) {
   const consumed = HISTORY_ITEMS.filter(
     (i) => i.date === "Heute",
@@ -5773,6 +6672,7 @@ function ProfileScreenView({
             {
               icon: <LogOut className="w-3.5 h-3.5" />,
               label: "Abmelden",
+              onClick: onLogout,
               red: true,
             },
           ].map(({ icon, label, onClick, red }) => (
@@ -6506,14 +7406,20 @@ function FoodSelectDialog({
   onClose: () => void;
 }) {
   const [category, setCategory] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const noData = ["Fisch", "Getränke"];
+  const searchResults = ALL_FOODS.filter((food) =>
+    food.name.toLocaleLowerCase("de-DE").includes(
+      query.trim().toLocaleLowerCase("de-DE"),
+    ),
+  );
 
   return (
     <div
       style={{
         position: "absolute" as const,
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "var(--c-overlay)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -6592,12 +7498,117 @@ function FoodSelectDialog({
         </div>
         <div
           style={{
+            margin: "10px 14px 0",
+            height: 38,
+            flexShrink: 0,
+            borderRadius: 12,
+            background: C.muted,
+            border: `1px solid ${C.border}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "0 11px",
+          }}
+        >
+          <Search className="w-4 h-4" color={C.gray3} />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Lebensmittel suchen…"
+            autoFocus
+            style={{
+              flex: 1,
+              minWidth: 0,
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              color: C.gray1,
+              fontFamily: "inherit",
+              fontSize: 13,
+            }}
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Suche leeren"
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                border: "none",
+                background: C.card,
+                color: C.gray2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+        <div
+          style={{
             flex: 1,
             overflowY: "auto" as const,
             padding: 14,
           }}
         >
-          {!category ? (
+          {query.trim() ? (
+            searchResults.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3,1fr)",
+                  gap: 8,
+                }}
+              >
+                {searchResults.map((food) => (
+                  <button
+                    key={food.id}
+                    onClick={() => {
+                      onSelect(food);
+                      onClose();
+                    }}
+                    style={{
+                      background: C.card,
+                      border: `1.5px solid ${C.border}`,
+                      borderRadius: 12,
+                      padding: "10px 8px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 9,
+                    }}
+                  >
+                    <span style={{ fontSize: 27 }}>{food.emoji}</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: C.gray1,
+                        fontWeight: 650,
+                        textAlign: "left" as const,
+                      }}
+                    >
+                      {food.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: 28,
+                  textAlign: "center" as const,
+                  color: C.gray3,
+                  fontSize: 13,
+                }}
+              >
+                Kein Lebensmittel für „{query}“ gefunden.
+              </div>
+            )
+          ) : !category ? (
             <div
               style={{
                 display: "grid",
@@ -6709,7 +7720,7 @@ function GuestModeDialog({
       style={{
         position: "absolute" as const,
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "var(--c-overlay)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -6899,7 +7910,7 @@ function CalorieGoalDialog({
       style={{
         position: "absolute" as const,
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "var(--c-overlay)",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -7022,6 +8033,133 @@ function CalorieGoalDialog({
   );
 }
 
+function PowerOffDialog({
+  onConfirm,
+  onClose,
+}: {
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute" as const,
+        inset: 0,
+        zIndex: 220,
+        background: "var(--c-overlay)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          width: 330,
+          maxWidth: "100%",
+          background: C.elevated,
+          border: `1px solid ${C.border}`,
+          borderRadius: 22,
+          padding: 22,
+          boxShadow: "0 20px 60px rgba(0,0,0,.2)",
+          textAlign: "center" as const,
+        }}
+      >
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            margin: "0 auto 12px",
+            borderRadius: "50%",
+            background: "rgba(239,68,68,.12)",
+            color: C.red,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Power className="w-6 h-6" />
+        </div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: C.gray1 }}>
+          Gerät ausschalten?
+        </div>
+        <div
+          style={{
+            margin: "7px 0 18px",
+            fontSize: 12,
+            lineHeight: 1.45,
+            color: C.gray2,
+          }}
+        >
+          Nicht gespeicherte Messungen gehen dabei verloren.
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <SecondaryBtn
+            label="Abbrechen"
+            onClick={onClose}
+            style={{ flex: 1 }}
+          />
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1,
+              minHeight: 44,
+              border: "none",
+              borderRadius: 14,
+              background: C.red,
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Ausschalten
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PoweredOffScreen({ onPowerOn }: { onPowerOn: () => void }) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        background: "#050506",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 14,
+      }}
+    >
+      <button
+        onClick={onPowerOn}
+        aria-label="Gerät einschalten"
+        style={{
+          width: 68,
+          height: 68,
+          borderRadius: "50%",
+          border: "1px solid rgba(255,255,255,.16)",
+          background: "rgba(255,255,255,.07)",
+          color: "rgba(255,255,255,.72)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+      >
+        <Power className="w-8 h-8" />
+      </button>
+      <span style={{ fontSize: 12, color: "rgba(255,255,255,.38)" }}>
+        Zum Einschalten tippen
+      </span>
+    </div>
+  );
+}
+
 // ─── Device Frame ──────────────────────────────────────────────────────────────
 
 function DeviceFrame({
@@ -7029,6 +8167,7 @@ function DeviceFrame({
 }: {
   children: React.ReactNode;
 }) {
+  const frameSide = "#111113";
   return (
     <div
       style={{
@@ -7045,7 +8184,7 @@ function DeviceFrame({
           top: 100,
           width: 4,
           height: 36,
-          background: "#2A2A2A",
+          background: frameSide,
           borderRadius: "3px 0 0 3px",
         }}
       />
@@ -7056,7 +8195,7 @@ function DeviceFrame({
           top: 148,
           width: 4,
           height: 36,
-          background: "#2A2A2A",
+          background: frameSide,
           borderRadius: "3px 0 0 3px",
         }}
       />
@@ -7067,7 +8206,7 @@ function DeviceFrame({
           top: 140,
           width: 4,
           height: 60,
-          background: "#2A2A2A",
+          background: frameSide,
           borderRadius: "0 3px 3px 0",
         }}
       />
@@ -7076,9 +8215,9 @@ function DeviceFrame({
           position: "absolute" as const,
           inset: 0,
           borderRadius: 26,
-          background: "linear-gradient(145deg,#414146,#171719)",
+          background: "linear-gradient(145deg,#303034,#09090A)",
           boxShadow:
-            "0 30px 80px rgba(0,0,0,0.45), 0 10px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)",
+            "0 30px 80px rgba(0,0,0,0.38), 0 10px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.09)",
           padding: 10,
           display: "flex",
           flexDirection: "column",
@@ -7087,6 +8226,7 @@ function DeviceFrame({
         <div
           style={{
             flex: 1,
+            minHeight: 0,
             borderRadius: 17,
             background: "transparent",
             overflow: "hidden",
@@ -7108,7 +8248,7 @@ function DeviceFrame({
               width: 72,
               height: 3,
               borderRadius: 2,
-              background: "rgba(255,255,255,0.18)",
+              background: "rgba(255,255,255,0.2)",
             }}
           />
         </div>
@@ -7147,6 +8287,7 @@ export default function App() {
   const activeTheme = (
     appearance === "auto" ? getAutoTheme() : appearance
   ) as "light" | "dark";
+  const isDarkTheme = activeTheme === "dark";
 
   const STANDBY_WARNING_AT = 170; // show banner at 2 min 50 s
   const STANDBY_AT = 180; // enter standby at 3 min
@@ -7157,7 +8298,7 @@ export default function App() {
   );
 
   useEffect(() => {
-    if (screen === "standby") return;
+    if (screen === "standby" || screen === "powered-off") return;
     const interval = setInterval(() => {
       setSecondsInactive((s) => {
         if (s + 1 >= STANDBY_AT) {
@@ -7210,8 +8351,11 @@ export default function App() {
         : food;
       setCurrentFood(f);
       setDemoWeight(weight);
-      if (f.confidence < 90) go("low-confidence");
-      else go("recognition-result");
+      if (f.confidence < MIN_CONFIDENCE_FOR_DIRECT_RESULT) {
+        go("low-confidence");
+      } else {
+        go("recognition-result");
+      }
     },
     [demoLowConf, go],
   );
@@ -7366,7 +8510,15 @@ export default function App() {
             onScaleOnly={() => go("guest-weighing")}
             onHistory={() => go("history")}
             onProfile={() => go("profile-screen")}
+            onSwitchProfile={() => go("profile-selection")}
+            onLogout={() => {
+              setProfile(null);
+              setCurrentFood(null);
+              setSelectedFood(null);
+              go("returning-user");
+            }}
             onSettings={() => go("settings")}
+            onPowerOff={() => openDialog("power-off")}
           />
         );
       case "manual-weigh":
@@ -7437,6 +8589,8 @@ export default function App() {
         return (
           <StandbyScreen onWake={() => go("returning-user")} />
         );
+      case "powered-off":
+        return <PoweredOffScreen onPowerOn={() => go("boot")} />;
       case "guest-weighing":
         return (
           <GuestWeighingScreen
@@ -7453,6 +8607,13 @@ export default function App() {
                   : "guest-weighing",
               )
             }
+            onBack={() =>
+              go(profile ? "home" : "returning-user")
+            }
+            onLogin={() => {
+              setProfile(null);
+              go("returning-user");
+            }}
           />
         );
       case "history":
@@ -7475,6 +8636,13 @@ export default function App() {
             onBack={() => go("home")}
             onOpenCalorieGoal={() => openDialog("calorie-goal")}
             onProfileSelect={() => go("profile-selection")}
+            onLogout={() => {
+              setProfile(null);
+              setCurrentFood(null);
+              setSelectedFood(null);
+              setDialog(null);
+              go("returning-user");
+            }}
           />
         ) : null;
       case "settings":
@@ -7492,14 +8660,16 @@ export default function App() {
 
   const showStandbyBanner =
     secondsInactive >= STANDBY_WARNING_AT &&
-    screen !== "standby";
+    screen !== "standby" &&
+    screen !== "powered-off";
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(circle at 50% 12%,#303038 0%,#151518 48%,#09090A 100%)",
+        background: isDarkTheme
+          ? "radial-gradient(circle at 50% 12%,#303038 0%,#151518 48%,#09090A 100%)"
+          : "radial-gradient(circle at 50% 12%,#FFFFFF 0%,#F7F8FA 52%,#EEF1F5 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -7528,9 +8698,9 @@ export default function App() {
         button { touch-action: manipulation; }
         button:focus-visible { outline: 3px solid rgba(10,132,255,.45); outline-offset: 2px; }
         .ss-nutrition-scroll { scrollbar-width: thin; scrollbar-color: rgba(110,110,115,.55) transparent; overscroll-behavior: contain; }
-        .ss-nutrition-scroll::-webkit-scrollbar { width: 6px; }
-        .ss-nutrition-scroll::-webkit-scrollbar-track { background: transparent; }
-        .ss-nutrition-scroll::-webkit-scrollbar-thumb { background: rgba(110,110,115,.5); border-radius: 99px; }
+        .ss-nutrition-scroll::-webkit-scrollbar { width: 8px; }
+        .ss-nutrition-scroll::-webkit-scrollbar-track { background: var(--c-muted); border-radius: 99px; }
+        .ss-nutrition-scroll::-webkit-scrollbar-thumb { background: var(--c-gray3); border: 2px solid var(--c-muted); border-radius: 99px; }
         .ss-themed[data-theme="dark"] { color-scheme: dark; }
         .ss-themed[data-theme="dark"] input { background-color: var(--c-input); color: var(--c-gray1); border-color: var(--c-border) !important; }
         .ss-themed[data-theme="dark"] input::placeholder { color: var(--c-gray3); opacity: 1; }
@@ -7558,13 +8728,15 @@ export default function App() {
             gap: 10,
           }}
         >
-          {/* Horizontal logo — white variant for dark page background */}
-          <HorizontalLogo scale={0.5} light />
+          {/* Horizontal logo — adapts to the active page background */}
+          <HorizontalLogo scale={0.5} light={isDarkTheme} />
         </div>
         <span
           style={{
             fontSize: 11,
-            color: "rgba(255,255,255,0.4)",
+            color: isDarkTheme
+              ? "rgba(255,255,255,0.4)"
+              : "rgba(28,28,30,0.58)",
           }}
         >
           Interaktiver Prototyp · 5,5″ Landscape · 14,4 × 7,8 cm
@@ -7587,11 +8759,15 @@ export default function App() {
           style={{
             background: isFirstUse
               ? C.blue
-              : "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
+              : isDarkTheme
+                ? "rgba(255,255,255,0.1)"
+                : "#FFFFFF",
+            border: isDarkTheme
+              ? "1px solid rgba(255,255,255,0.2)"
+              : "1px solid rgba(60,60,67,0.16)",
             borderRadius: 20,
             padding: "6px 16px",
-            color: "#fff",
+            color: isFirstUse || isDarkTheme ? "#fff" : "#1C1C1E",
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -7604,11 +8780,15 @@ export default function App() {
           style={{
             background: demoLowConf
               ? C.orange
-              : "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
+              : isDarkTheme
+                ? "rgba(255,255,255,0.1)"
+                : "#FFFFFF",
+            border: isDarkTheme
+              ? "1px solid rgba(255,255,255,0.2)"
+              : "1px solid rgba(60,60,67,0.16)",
             borderRadius: 20,
             padding: "6px 16px",
-            color: "#fff",
+            color: demoLowConf || isDarkTheme ? "#fff" : "#1C1C1E",
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -7622,7 +8802,9 @@ export default function App() {
         <div
           style={{
             display: "flex",
-            background: "rgba(255,255,255,0.08)",
+            background: isDarkTheme
+              ? "rgba(255,255,255,0.08)"
+              : "#E8EBF0",
             borderRadius: 22,
             padding: 3,
             gap: 2,
@@ -7637,12 +8819,14 @@ export default function App() {
               style={{
                 background:
                   appearance === a
-                    ? "rgba(255,255,255,0.9)"
+                    ? "#FFFFFF"
                     : "transparent",
                 color:
                   appearance === a
                     ? "#111"
-                    : "rgba(255,255,255,0.6)",
+                    : isDarkTheme
+                      ? "rgba(255,255,255,0.6)"
+                      : "rgba(28,28,30,0.62)",
                 border: "none",
                 borderRadius: 18,
                 padding: "4px 14px",
@@ -7682,16 +8866,21 @@ export default function App() {
           onClick={resetTimer}
           style={{
             flex: 1,
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
             position: "relative" as const,
+            background: C.bg,
           }}
         >
-          {screen !== "standby" && <StatusBar />}
+          {screen !== "standby" && screen !== "powered-off" && (
+            <StatusBar />
+          )}
           <div
             key={screenKey}
             style={{
               flex: 1,
+              minHeight: 0,
               display: "flex",
               flexDirection: "column",
               opacity: fading ? 0 : 1,
@@ -7720,6 +8909,17 @@ export default function App() {
                 onClose={closeDialog}
               />
             )}
+            {dialog === "power-off" && (
+              <PowerOffDialog
+                onClose={closeDialog}
+                onConfirm={() => {
+                  closeDialog();
+                  setCurrentFood(null);
+                  setSelectedFood(null);
+                  go("powered-off");
+                }}
+              />
+            )}
             {/* Standby countdown banner */}
             {showStandbyBanner && (
               <div
@@ -7730,7 +8930,7 @@ export default function App() {
                   right: 0,
                   height: 44,
                   zIndex: 150,
-                  background: "rgba(10,10,20,0.78)",
+                  background: "var(--c-countdown-bg)",
                   backdropFilter: "blur(12px)",
                   display: "flex",
                   alignItems: "center",
@@ -7738,7 +8938,12 @@ export default function App() {
                   padding: "0 16px",
                 }}
               >
-                <span style={{ fontSize: 13, color: "#fff" }}>
+                <span
+                  style={{
+                    fontSize: 13,
+                    color: "var(--c-countdown-text)",
+                  }}
+                >
                   Standby in {STANDBY_AT - secondsInactive}{" "}
                   Sekunden…
                 </span>
@@ -7781,13 +8986,23 @@ export default function App() {
             onClick={() => go(s)}
             style={{
               background:
-                screen === s ? C.blue : "rgba(255,255,255,0.1)",
+                screen === s
+                  ? C.blue
+                  : isDarkTheme
+                    ? "rgba(255,255,255,0.1)"
+                    : "#FFFFFF",
               color:
-                screen === s ? "#fff" : "rgba(255,255,255,0.7)",
+                screen === s
+                  ? "#fff"
+                  : isDarkTheme
+                    ? "rgba(255,255,255,0.7)"
+                    : "rgba(28,28,30,0.72)",
               border:
                 screen === s
                   ? `1px solid ${C.blue}`
-                  : "1px solid rgba(255,255,255,0.15)",
+                  : isDarkTheme
+                    ? "1px solid rgba(255,255,255,0.15)"
+                    : "1px solid rgba(60,60,67,0.16)",
               borderRadius: 8,
               padding: "5px 12px",
               fontSize: 12,
@@ -7803,7 +9018,9 @@ export default function App() {
         className="prototype-hint"
         style={{
           fontSize: 11,
-          color: "rgba(255,255,255,0.25)",
+          color: isDarkTheme
+            ? "rgba(255,255,255,0.25)"
+            : "rgba(28,28,30,0.48)",
           textAlign: "center" as const,
         }}
       >
