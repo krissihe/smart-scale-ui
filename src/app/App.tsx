@@ -39,6 +39,8 @@ import {
 import AppIconRaw from "@/imports/AppIcon/index";
 import HorizontalLogoRaw from "@/imports/HorizontalLogo/index";
 import ContainerRaw from "@/imports/Container/index";
+import iPhoneImage from "@/assets/iPhone-transparent.png";
+import welcomeLogo from "@/assets/logo.png";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -73,12 +75,13 @@ type Dialog =
   | "power-off"
   | null;
 type WeighMode = "ki" | "manual" | "scale-only";
-type GuestMode = "smart" | "scale-only";
+type GuestMode = "smart" | "manual" | "scale-only";
 
 interface ProfileData {
   id: string;
   name: string;
   initials: string;
+  pin?: string;
   goal: string;
   calories: number;
   lastSync: string;
@@ -105,6 +108,7 @@ const PROFILES: ProfileData[] = [
     id: "1",
     name: "Kristina",
     initials: "K",
+    pin: "1234",
     goal: "Gewicht verlieren",
     calories: 1600,
     lastSync: "heute",
@@ -114,6 +118,7 @@ const PROFILES: ProfileData[] = [
     id: "2",
     name: "Ron",
     initials: "R",
+    pin: "1234",
     goal: "Muskelaufbau",
     calories: 2800,
     lastSync: "vor 2 Tagen",
@@ -123,6 +128,7 @@ const PROFILES: ProfileData[] = [
     id: "3",
     name: "Michelle",
     initials: "M",
+    pin: "1234",
     goal: "Gewicht halten",
     calories: 1900,
     lastSync: "vor 1 Woche",
@@ -132,6 +138,7 @@ const PROFILES: ProfileData[] = [
     id: "4",
     name: "Enzo",
     initials: "E",
+    pin: "1234",
     goal: "Gewicht halten",
     calories: 2200,
     lastSync: "heute",
@@ -481,34 +488,36 @@ function getAutoTheme(): "light" | "dark" {
 /** CSS custom-property values injected on .ss-themed container — theme-switched at runtime */
 const THEME_VARS: Record<"light" | "dark", string> = {
   light: `
-    --c-blue:#007AFF; --c-blue-lt:#EAF3FF;
-    --c-green:#30D158; --c-green-lt:#ECFDF1;
+    --c-blue:#2CCEF5; --c-blue-strong:#18C4F0; --c-blue-dark:#00A9E8; --c-blue-glow:#8EEBFF; --c-blue-lt:#D7F3FD;
+    --c-green:#34D399; --c-green-lt:#DCFCE7;
     --c-orange:#F97316; --c-red:#EF4444;
-    --c-gray1:#1C1C1E; --c-gray2:#6E6E73; --c-gray3:#AEAEB2;
-    --c-card:#FFFFFF; --c-border:rgba(60,60,67,.14); --c-bg:#F7F7FA; --c-muted:#EDEEF2;
-    --c-elevated:#FFFFFF; --c-input:#F2F2F7;
-    --c-overlay:rgba(247,247,250,.88);
-    --c-warning-bg:#FFF3E8; --c-warning-text:#B54708;
-    --c-tracking-device:#E5E7EB; --c-tracking-screen:#FFFFFF;
-    --c-countdown-bg:rgba(255,255,255,.94); --c-countdown-text:#1C1C1E;
-    --c-btn-shadow:rgba(59,130,246,0.28); --c-ok-shadow:rgba(34,197,94,0.32);
-    --c-standby-bg:#F4F4F6; --c-standby-text:#1C1C1E; --c-standby-sub:#6E6E73;
+    --c-gray1:#101828; --c-gray2:#475569; --c-gray3:#64748B;
+    --c-card:#FFFFFF; --c-border:rgba(44,206,245,.12); --c-bg:#FFFFFF; --c-muted:#F7FBFD;
+    --c-elevated:#FFFFFF; --c-input:#FFFFFF;
+    --c-overlay:rgba(244,248,255,.9);
+    --c-warning-bg:#FFFBEB; --c-warning-text:#B45309;
+    --c-tracking-device:#8EEBFF; --c-tracking-screen:#FFFFFF;
+    --c-countdown-bg:rgba(255,255,255,.94); --c-countdown-text:#101828;
+    --c-btn-shadow:rgba(24,196,240,0.28); --c-ok-shadow:rgba(52,211,153,0.24);
+    --c-standby-bg:#EAF5FF; --c-standby-text:#101828; --c-standby-sub:#64748B;
+    --brand-blue:#2CCEF5; --brand-blue-strong:#18C4F0; --brand-blue-dark:#00A9E8; --brand-blue-glow:#8EEBFF; --brand-text:#101828;
     --logo-filter:none;
   `,
   dark: `
-    --c-blue:#0A84FF; --c-blue-lt:rgba(10,132,255,0.16);
-    --c-green:#30D158; --c-green-lt:rgba(48,209,88,0.14);
-    --c-orange:#F97316; --c-red:#EF4444;
-    --c-gray1:#F2F2F4; --c-gray2:#9B9BA4; --c-gray3:#6C6C75;
-    --c-card:#1C1C1E; --c-border:rgba(255,255,255,.12); --c-bg:#000000; --c-muted:#2C2C2E;
-    --c-elevated:#1B1D21; --c-input:#25272B;
-    --c-overlay:rgba(0,0,0,.45);
-    --c-warning-bg:rgba(20,20,22,.76); --c-warning-text:#FFFFFF;
-    --c-tracking-device:#F2F2F4; --c-tracking-screen:#2C2C2E;
-    --c-countdown-bg:rgba(10,10,20,.78); --c-countdown-text:#FFFFFF;
-    --c-btn-shadow:rgba(59,130,246,0.18); --c-ok-shadow:rgba(34,197,94,0.20);
-    --c-standby-bg:#0B0D10; --c-standby-text:#F2F2F4; --c-standby-sub:#6C6C75;
-    --logo-filter:brightness(0) invert(1);
+    --c-blue:#2CCEF5; --c-blue-strong:#18C4F0; --c-blue-dark:#00A9E8; --c-blue-glow:#8EEBFF; --c-blue-lt:rgba(44,206,245,0.18);
+    --c-green:#34D399; --c-green-lt:rgba(52,211,153,0.18);
+    --c-orange:#FB923C; --c-red:#F87171;
+    --c-gray1:#F8FAFC; --c-gray2:#94A3B8; --c-gray3:#6C7D93;
+    --c-card:#111114; --c-border:rgba(255,255,255,.08); --c-bg:#090909; --c-muted:#121214;
+    --c-elevated:#111114; --c-input:#141418;
+    --c-overlay:rgba(0,0,0,.72);
+    --c-warning-bg:rgba(255,243,224,.9); --c-warning-text:#F8FAFC;
+    --c-tracking-device:#8EEBFF; --c-tracking-screen:#121214;
+    --c-countdown-bg:rgba(10,10,10,.88); --c-countdown-text:#F8FAFC;
+    --c-btn-shadow:rgba(24,196,240,0.2); --c-ok-shadow:rgba(52,211,153,0.18);
+    --c-standby-bg:#090909; --c-standby-text:#F8FAFC; --c-standby-sub:#94A3B8;
+    --brand-blue:#2CCEF5; --brand-blue-strong:#18C4F0; --c-brand-blue-dark:#00A9E8; --brand-blue-glow:#8EEBFF; --brand-text:#F8FAFC;
+    --logo-filter:none;
   `,
 };
 
@@ -1293,7 +1302,7 @@ function BootScreen({
       }}
     >
       {/* Brand mark + wordmark — Figma horizontal logo at native scale */}
-      <HorizontalLogo scale={0.9} />
+      <HorizontalLogo scale={4} />
       <div
         style={{ fontSize: 13, color: C.gray2, marginTop: -4 }}
       >
@@ -1338,17 +1347,39 @@ function OnboardingScreen({
   step,
   onNext,
   onSkip,
+  profile,
 }: {
   step: "welcome" | "explain" | "ready";
   onNext: () => void;
   onSkip?: () => void;
+  profile?: ProfileData | null;
 }) {
   const content = {
     welcome: {
       eyebrow: "WILLKOMMEN",
       title: "Schön, dass du da bist.",
       text: "In weniger als einer Minute ist deine Smart Scale bereit.",
-      icon: <HorizontalLogo scale={0.72} themed />,
+      icon: (
+        <div
+          style={{
+            width: 280,
+            height: 120,
+            position: "relative",
+          }}
+        >
+          <img
+            src={welcomeLogo}
+            alt="Smart Scale Logo"
+            style={{
+              width: "100%",
+              height: "100%",
+              maxWidth: "90%",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
+        </div>
+      ),
       action: "Einrichtung starten",
     },
     explain: {
@@ -1404,10 +1435,20 @@ function OnboardingScreen({
       action: "Profil anlegen",
     },
     ready: {
-      eyebrow: "GESCHAFFT",
-      title: "Du bist startklar.",
-      text: "Lege ein Lebensmittel auf oder nutze die Waage ganz einfach ohne Tracking.",
-      icon: (
+      eyebrow: "GLÜCKWUNSCH",
+      title: profile
+        ? `Willkommen, ${profile.name}!`
+        : "Du bist startklar.",
+      text: profile
+        ? "Dein Profil ist eingerichtet und deine Smart Scale ist startklar."
+        : "Lege ein Lebensmittel auf oder nutze die Waage ganz einfach ohne Tracking.",
+      icon: profile ? (
+        <Avatar
+          initials={profile.initials}
+          color={profile.color}
+          size={96}
+        />
+      ) : (
         <div
           style={{
             width: 72,
@@ -1508,12 +1549,10 @@ function ReturningUserScreen({
   onSelectProfile,
   onGuest,
   onCreate,
-  onScaleOnly,
 }: {
   onSelectProfile: (p: ProfileData) => void;
   onGuest: () => void;
   onCreate: () => void;
-  onScaleOnly: () => void;
 }) {
   const primary = PROFILES[0];
 
@@ -1630,12 +1669,16 @@ function ReturningUserScreen({
                 fontSize: 12,
                 fontWeight: 650,
                 color: C.blue,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                whiteSpace: "nowrap",
               }}
             >
-              Mit PIN anmelden{" "}
+              {primary.pin ? "Mit PIN anmelden" : "Ohne PIN anmelden"}
               <ChevronRight
                 className="w-3 h-3"
-                style={{ display: "inline" }}
+                style={{ flexShrink: 0 }}
               />
             </span>
           </div>
@@ -1680,17 +1723,17 @@ function ReturningUserScreen({
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           paddingTop: 2,
         }}
       >
         <button
-          onClick={onScaleOnly}
+          onClick={onGuest}
           style={{
             border: "none",
             background: C.muted,
-            color: C.gray1,
+            color: C.blue,
             borderRadius: 14,
             minHeight: 40,
             padding: "0 16px",
@@ -1702,21 +1745,7 @@ function ReturningUserScreen({
             gap: 7,
           }}
         >
-          <Scale className="w-4 h-4" /> Direkt nur wiegen
-        </button>
-        <button
-          onClick={onGuest}
-          style={{
-            border: "none",
-            background: "transparent",
-            color: C.blue,
-            padding: 10,
-            fontSize: 12,
-            fontWeight: 650,
-            cursor: "pointer",
-          }}
-        >
-          KI als Gast verwenden →
+          <Scale className="w-4 h-4" /> Waage als Gast verwenden →
         </button>
       </div>
     </div>
@@ -1836,7 +1865,7 @@ function ProfileSelectionScreen({
               </div>
             </div>
             <PrimaryBtn
-              label="Auswählen"
+              label={p.pin ? "Mit PIN anmelden" : "Ohne PIN anmelden"}
               onClick={() => onSelect(p)}
               style={{ width: "100%", padding: "8px 0" }}
             />
@@ -1907,6 +1936,9 @@ function CreateProfileScreen({
   >("select");
   const [showIcons, setShowIcons] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState("👩");
+  const [showPinChoice, setShowPinChoice] = useState(false);
+  const [pinStage, setPinStage] = useState<"choose" | "enter">("choose");
+  const [profilePin, setProfilePin] = useState("");
   const [connectedApp, setConnectedApp] = useState<
     string | null
   >(null);
@@ -2126,10 +2158,10 @@ function CreateProfileScreen({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(2, minmax(0, 130px))",
+            justifyContent: "center",
             gridAutoRows: "1fr",
             gap: 7,
-            flex: 1,
             minHeight: 0,
           }}
         >
@@ -2200,7 +2232,7 @@ function CreateProfileScreen({
             style={{
               fontSize: 10,
               color: C.gray2,
-              marginTop: -10,
+              marginTop: 10,
             }}
           >
             Ohne App kannst du wiegen und Nährwerte sehen, aber
@@ -2209,25 +2241,170 @@ function CreateProfileScreen({
         )}
         <PrimaryBtn
           label="Profil erstellen"
-          onClick={() =>
-            onCreate({
-              id: `new-${Date.now()}`,
-              name: name.trim(),
-              initials: selectedIcon,
-              goal,
-              calories: Number(kcal) || 2000,
-              lastSync: connectedApp
-                ? `mit ${connectedApp}`
-                : "nicht verbunden",
-              color: "#007AFF",
-            })
-          }
+          onClick={() => {
+            setShowPinChoice(true);
+            setPinStage("choose");
+            setProfilePin("");
+          }}
           disabled={!name.trim() || !goal}
           style={{
             alignSelf: "flex-end",
             padding: "11px 28px",
           }}
         />
+        {showPinChoice && (
+          <div
+            style={{
+              position: "absolute" as const,
+              inset: 10,
+              zIndex: 40,
+              background: "rgba(15, 23, 42, 0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 340,
+                maxWidth: "100%",
+                borderRadius: 24,
+                background: C.bg,
+                border: `1px solid ${C.border}`,
+                boxShadow: "0 30px 70px rgba(0,0,0,.25)",
+                padding: 22,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      color: C.gray1,
+                    }}
+                  >
+                    Profil erstellen
+                  </div>
+                  <div style={{ fontSize: 12, color: C.gray2, marginTop: 4 }}>
+                    Wähle jetzt, ob du eine PIN festlegen möchtest.
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPinChoice(false)}
+                  aria-label="Popup schließen"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "50%",
+                    border: "none",
+                    background: C.muted,
+                    color: C.gray1,
+                    cursor: "pointer",
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {pinStage === "choose" ? (
+                <div style={{ display: "grid", gap: 12 }}>
+                  <PrimaryBtn
+                    label="PIN festlegen"
+                    onClick={() => setPinStage("enter")}
+                  />
+                  <GhostBtn
+                    label="Ohne PIN fortfahren"
+                    onClick={() => {
+                      setShowPinChoice(false);
+                      onCreate({
+                        id: `new-${Date.now()}`,
+                        name: name.trim(),
+                        initials: selectedIcon,
+                        goal,
+                        calories: Number(kcal) || 2000,
+                        lastSync: connectedApp
+                          ? `mit ${connectedApp}`
+                          : "nicht verbunden",
+                        color: "#007AFF",
+                      });
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 12 }}>
+                  <div style={{ fontSize: 13, color: C.gray2 }}>
+                    Gib deine vierstellige Profil-PIN ein, um später schneller ins Profil zu kommen.
+                  </div>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    maxLength={4}
+                    value={profilePin}
+                    onChange={(event) =>
+                      setProfilePin(event.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="PIN"
+                    style={{
+                      width: "100%",
+                      height: 48,
+                      boxSizing: "border-box",
+                      borderRadius: 14,
+                      border: `1px solid ${
+                        profilePin.length === 4 ? C.green : C.border
+                      }`,
+                      background: C.elevated,
+                      color: C.gray1,
+                      textAlign: "center",
+                      fontSize: 18,
+                      letterSpacing: 6,
+                      outline: "none",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <GhostBtn
+                      label="Zurück"
+                      onClick={() => setPinStage("choose")}
+                      style={{ flex: 1 }}
+                    />
+                    <PrimaryBtn
+                      label="Profil erstellen"
+                      onClick={() => {
+                        if (profilePin.length !== 4) return;
+                        setShowPinChoice(false);
+                        onCreate({
+                          id: `new-${Date.now()}`,
+                          name: name.trim(),
+                          initials: selectedIcon,
+                          pin: profilePin,
+                          goal,
+                          calories: Number(kcal) || 2000,
+                          lastSync: connectedApp
+                            ? `mit ${connectedApp}`
+                            : "nicht verbunden",
+                          color: "#007AFF",
+                        });
+                      }}
+                      disabled={profilePin.length !== 4}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {showIcons && (
           <div
             style={{
@@ -2352,7 +2529,7 @@ function CreateProfileScreen({
                     ? "Tracking-App auswählen"
                     : pairingStage === "qr"
                       ? `${pairingApp} verbinden`
-                      : "Verknüpfung erfolgreich"}
+                      : "Verbindung hergestellt"}
                 </div>
                 <div style={{ fontSize: 11, color: C.gray2 }}>
                   {pairingStage === "select"
@@ -2458,7 +2635,7 @@ function CreateProfileScreen({
                     height: 164,
                     padding: 10,
                     borderRadius: 16,
-                    background: "#fff",
+                    background: C.card,
                     border: `1px solid ${C.border}`,
                     display: "grid",
                     gridTemplateColumns: "repeat(11, 1fr)",
@@ -2508,7 +2685,7 @@ function CreateProfileScreen({
                     diesen Code, um die Verbindung freizugeben.
                   </div>
                   <PrimaryBtn
-                    label="QR-Scan simulieren"
+                    label="Verbindung herstellen"
                     onClick={() => {
                       setConnectedApp(pairingApp);
                       setPairingStage("success");
@@ -2557,14 +2734,14 @@ function CreateProfileScreen({
                     color: C.green,
                   }}
                 >
-                  Verknüpfung erfolgreich
+                  Verbindung hergestellt
                 </div>
                 <div style={{ marginTop: 5, fontSize: 12, color: C.gray2 }}>
                   {pairingApp} ist verbunden. Du kannst dein Profil
                   jetzt erstellen.
                 </div>
                 <PrimaryBtn
-                  label="Weiter zum Profil"
+                  label="✓ Verbindung hergestellt"
                   onClick={() => setShowApps(false)}
                   style={{ marginTop: 18 }}
                 />
@@ -2589,15 +2766,27 @@ function LoginScreen({
   onLogin: () => void;
 }) {
   const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const onLoginRef = useRef(onLogin);
+  onLoginRef.current = onLogin;
 
   useEffect(() => {
     if (pin.length === 4) {
-      const t = setTimeout(() => onLogin(), 300);
+      const t = setTimeout(() => {
+        const isCreatedProfile = profile.id.startsWith("new-");
+        if (!isCreatedProfile || !profile.pin || pin === profile.pin) {
+          onLoginRef.current();
+        } else {
+          setPinError(true);
+          setPin("");
+        }
+      }, 300);
       return () => clearTimeout(t);
     }
-  }, [pin, onLogin]);
+  }, [pin, profile.pin]);
 
   const handleKey = (k: string) => {
+    setPinError(false);
     if (k === "del") {
       setPin((p) => p.slice(0, -1));
       return;
@@ -2698,11 +2887,13 @@ function LoginScreen({
           <div
             style={{
               fontSize: 12,
-              color: C.gray2,
+              color: pinError ? C.red : C.gray2,
               marginTop: 3,
             }}
           >
-            Bitte gib deinen 4-stelligen PIN ein.
+            {pinError
+              ? "PIN nicht korrekt. Bitte erneut versuchen."
+              : "Bitte gib deinen 4-stelligen PIN ein."}
           </div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
@@ -2775,8 +2966,11 @@ function LoginScreen({
 
 function HomeScreen({
   profile,
+  showProfileWelcome,
+  onDismissProfileWelcome,
   weighMode,
   setWeighMode,
+  automaticDetection,
   selectedFood,
   setSelectedFood,
   taraActive,
@@ -2822,7 +3016,9 @@ function HomeScreen({
 
   const subtitle =
     weighMode === "ki"
-      ? "Scan startet automatisch"
+      ? automaticDetection
+        ? "Scan startet automatisch"
+        : "Kamera startet nur auf Knopfdruck"
       : weighMode === "manual" && !selectedFood
         ? "Erst auswählen, dann wiegen"
         : weighMode === "manual"
@@ -2847,6 +3043,7 @@ function HomeScreen({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        position: "relative" as const,
       }}
     >
       {/* Top Bar */}
@@ -2951,26 +3148,36 @@ function HomeScreen({
                   zIndex: 100,
                 }}
               >
-                {[
-                  {
-                    label: "Profil ansehen",
-                    icon: <User className="w-3.5 h-3.5" />,
-                    action: onProfile,
-                    color: C.gray1,
-                  },
-                  {
-                    label: "Profil wechseln",
-                    icon: <RefreshCw className="w-3.5 h-3.5" />,
-                    action: onSwitchProfile,
-                    color: C.blue,
-                  },
-                  {
-                    label: "Logout",
-                    icon: <LogOut className="w-3.5 h-3.5" />,
-                    action: onLogout,
-                    color: C.red,
-                  },
-                ].map((item) => (
+                {(profile
+                  ? [
+                      {
+                        label: "Profil ansehen",
+                        icon: <User className="w-3.5 h-3.5" />,
+                        action: onProfile,
+                        color: C.gray1,
+                      },
+                      {
+                        label: "Profil wechseln",
+                        icon: <RefreshCw className="w-3.5 h-3.5" />,
+                        action: onSwitchProfile,
+                        color: C.blue,
+                      },
+                      {
+                        label: "Logout",
+                        icon: <LogOut className="w-3.5 h-3.5" />,
+                        action: onLogout,
+                        color: C.red,
+                      },
+                    ]
+                  : [
+                      {
+                        label: "Profil einrichten",
+                        icon: <Plus className="w-3.5 h-3.5" />,
+                        action: onSwitchProfile,
+                        color: C.blue,
+                      },
+                    ]
+                ).map((item) => (
                   <button
                     key={item.label}
                     onClick={() => {
@@ -3040,6 +3247,61 @@ function HomeScreen({
           </button>
         </div>
       </div>
+
+      {showProfileWelcome && profile && (
+        <div
+          role="status"
+          style={{
+            position: "absolute" as const,
+            top: 38,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 80,
+            minWidth: 310,
+            padding: "10px 12px",
+            borderRadius: 16,
+            background: C.elevated,
+            border: `1px solid ${C.border}`,
+            boxShadow: "0 12px 30px rgba(0,0,0,.16)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            animation: "popIn .35s ease",
+          }}
+        >
+          <Avatar
+            initials={profile.initials}
+            color={profile.color}
+            size={38}
+          />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.gray1 }}>
+              Willkommen, {profile.name}!
+            </div>
+            <div style={{ fontSize: 10, color: C.gray2, marginTop: 1 }}>
+              Dein Profil wurde erfolgreich eingerichtet.
+            </div>
+          </div>
+          <button
+            onClick={onDismissProfileWelcome}
+            aria-label="Begrüßung schließen"
+            style={{
+              width: 25,
+              height: 25,
+              borderRadius: "50%",
+              border: "none",
+              background: C.muted,
+              color: C.gray2,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <div
@@ -3207,7 +3469,11 @@ function HomeScreen({
           >
             {weighMode === "ki" && (
               <GhostBtn
-                label="Scan manuell starten"
+                label={
+                  automaticDetection
+                    ? "Scan manuell starten"
+                    : "KI-Scan starten"
+                }
                 onClick={onCameraScan}
                 style={{
                   fontSize: 10,
@@ -3267,8 +3533,9 @@ function HomeScreen({
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <div
+      {/* Bottom Navigation / guest notice */}
+      {profile ? (
+        <div
         style={{
           height: 27,
           flexShrink: 0,
@@ -3310,7 +3577,26 @@ function HomeScreen({
             {label}
           </button>
         ))}
-      </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            height: 27,
+            flexShrink: 0,
+            borderTop: `1px solid ${C.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 5,
+            color: C.gray3,
+            fontSize: 9,
+            fontWeight: 750,
+          }}
+        >
+          <Shield className="w-3 h-3" /> Gastmodus · keine Speicherung oder
+          App-Übertragung
+        </div>
+      )}
     </div>
   );
 }
@@ -3334,24 +3620,26 @@ function ManualWeighScreen({
     const iv = setInterval(() => {
       setWeight((w) => {
         const next = w + Math.ceil(finalRef.current / 20);
-        return next >= finalRef.current
-          ? finalRef.current
-          : next;
+        if (next >= finalRef.current) {
+          clearInterval(iv);
+          return finalRef.current;
+        }
+        return next;
       });
     }, 80);
     return () => clearInterval(iv);
   }, []);
 
   useEffect(() => {
-    if (weight >= finalRef.current && !stable) {
-      setStable(true);
-      const t = setTimeout(
-        () => onComplete(food, finalRef.current),
-        800,
-      );
-      return () => clearTimeout(t);
-    }
-  }, [weight, stable, food, onComplete]);
+    if (weight < finalRef.current) return;
+
+    setStable(true);
+    const t = setTimeout(
+      () => onComplete(food, finalRef.current),
+      800,
+    );
+    return () => clearTimeout(t);
+  }, [weight, food, onComplete]);
 
   return (
     <div style={{ flex: 1, display: "flex" }}>
@@ -3493,23 +3781,30 @@ function FoodDetectionScreen({
   useEffect(() => {
     if (!weightStable) return;
 
-    const progressTimer = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) return 100;
-        return Math.min(p + 4, 100);
-      });
-    }, 120);
+    let animationFrame = 0;
+    let finishTimer: ReturnType<typeof setTimeout> | undefined;
+    const startedAt = performance.now();
+    const analysisDuration = 3200;
 
-    const finishTimer = setTimeout(() => {
-      setProgress(100);
-      setTimeout(() => {
-        onDone(foodRef.current, weightRef.current);
-      }, 500);
-    }, 3200);
+    const animateProgress = (now: number) => {
+      const elapsed = now - startedAt;
+      const fraction = Math.min(elapsed / analysisDuration, 1);
+      setProgress(fraction * 100);
+
+      if (fraction < 1) {
+        animationFrame = requestAnimationFrame(animateProgress);
+      } else {
+        finishTimer = setTimeout(() => {
+          onDone(foodRef.current, weightRef.current);
+        }, 500);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animateProgress);
 
     return () => {
-      clearInterval(progressTimer);
-      clearTimeout(finishTimer);
+      cancelAnimationFrame(animationFrame);
+      if (finishTimer) clearTimeout(finishTimer);
     };
   }, [onDone, weightStable]);
 
@@ -3522,6 +3817,7 @@ function FoodDetectionScreen({
         );
         if (next >= weightRef.current) {
           clearInterval(weightTimer);
+          setProgress(0);
           setWeightStable(true);
         }
         return next;
@@ -3826,63 +4122,57 @@ function FoodDetectionScreen({
               : "Bitte kurz warten, bis die Grammzahl stabil ermittelt wurde."}
           </p>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              marginBottom: 8,
-            }}
-          >
-            <span
+          {weightStable && (
+            <>
+              <div
               style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: !weightStable
-                  ? C.gray2
-                  : isDone
-                    ? C.green
-                    : C.blue,
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                marginBottom: 8,
               }}
             >
-              {statusText}
-            </span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: isDone ? C.green : C.blue,
+                  }}
+                >
+                  {statusText}
+                </span>
 
-            <span
-              style={{
-                fontSize: 22,
-                fontWeight: 850,
-                color: isDone ? C.green : C.gray1,
-              }}
-            >
-              {weightStable ? `${progress}%` : "–"}
-            </span>
-          </div>
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 850,
+                    color: isDone ? C.green : C.gray1,
+                  }}
+                >
+                  {`${Math.round(progress)}%`}
+                </span>
+              </div>
 
-          <div
-            style={{
-              height: 12,
-              background: C.muted,
-              borderRadius: 999,
-              overflow: "hidden",
-              border: `1px solid ${C.border}`,
-            }}
-          >
-            <div
+              <div
               style={{
-                width: `${progress}%`,
-                height: "100%",
-              background: !weightStable
-                ? C.gray3
-                : isDone
-                  ? C.green
-                  : C.blue,
+                height: 12,
+                background: C.muted,
                 borderRadius: 999,
-                transition:
-                  "width 0.2s ease, background 0.3s ease",
+                overflow: "hidden",
+                border: `1px solid ${C.border}`,
               }}
-            />
-          </div>
+            >
+                <div
+                  style={{
+                    width: `${progress}%`,
+                    height: "100%",
+                    background: C.blue,
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+            </>
+          )}
 
           <div style={{ marginTop: 18 }}>
             <SecondaryBtn
@@ -4082,6 +4372,7 @@ function RecognitionResultScreen({
   food,
   weight,
   profile,
+  source,
   onSave,
   onChangeFood,
   onCancel,
@@ -4089,6 +4380,7 @@ function RecognitionResultScreen({
   food: FoodItem;
   weight: number;
   profile: ProfileData | null;
+  source: "ai" | "manual";
   onSave: () => void;
   onChangeFood: () => void;
   onCancel: () => void;
@@ -4235,7 +4527,9 @@ function RecognitionResultScreen({
               color: C.gray2,
             }}
           >
-            Lebensmittel erkannt
+            {source === "manual"
+              ? "Manuelle Messung"
+              : "Lebensmittel erkannt"}
           </span>
         </div>
 
@@ -4283,27 +4577,29 @@ function RecognitionResultScreen({
             overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-              alignSelf: "flex-start",
-              background: C.greenLt,
-              color: C.green,
-              borderRadius: 999,
-              padding: "4px 8px",
-              fontSize: 10,
-              fontWeight: 800,
-            }}
-          >
-            <Check className="w-3 h-3" />
-            KI erkannt
-          </div>
+          {source === "ai" && (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                alignSelf: "flex-start",
+                background: C.greenLt,
+                color: C.green,
+                borderRadius: 999,
+                padding: "4px 8px",
+                fontSize: 10,
+                fontWeight: 800,
+              }}
+            >
+              <Check className="w-3 h-3" />
+              KI erkannt
+            </div>
+          )}
 
           <div
             style={{
-              marginTop: 9,
+              marginTop: source === "ai" ? 9 : 0,
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -4355,16 +4651,18 @@ function RecognitionResultScreen({
                 {food.name}
               </div>
 
-              <div
-                style={{
-                  marginTop: 5,
-                  fontSize: 12,
-                  color: C.gray2,
-                  fontWeight: 700,
-                }}
-              >
-                {food.confidence}% Sicherheit
-              </div>
+              {source === "ai" && (
+                <div
+                  style={{
+                    marginTop: 5,
+                    fontSize: 12,
+                    color: C.gray2,
+                    fontWeight: 700,
+                  }}
+                >
+                  {food.confidence}% Sicherheit
+                </div>
+              )}
             </div>
           </div>
 
@@ -5125,10 +5423,8 @@ function TrackingAnimationScreen({
             position: "absolute" as const,
             left: phase >= 2 ? "50%" : "67%",
             top: phase >= 2 ? 4 : 15,
-            width: 86,
-            height: 142,
-            borderRadius: 19,
-            background: "var(--c-tracking-device)",
+            width: 96,
+            height: 190,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -5136,38 +5432,206 @@ function TrackingAnimationScreen({
               phase >= 2
                 ? "translateX(-50%) scale(1.12)"
                 : "translateX(-50%) scale(1)",
-            transition:
-              "all 1.1s cubic-bezier(0.34,1.2,0.64,1)",
-            boxShadow: "0 14px 34px rgba(0,0,0,.16)",
+            transition: "all 1.1s cubic-bezier(0.34,1.2,0.64,1)",
+            zIndex: 1,
           }}
         >
           <div
             style={{
-              width: 70,
-              height: 116,
-              borderRadius: 12,
-              background: "var(--c-tracking-screen)",
+              position: "relative" as const,
+              width: 94,
+              height: 188,
+              borderRadius: 42,
+              background: "linear-gradient(180deg, #111214 0%, #070809 100%)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow:
+                "0 28px 70px rgba(0,0,0,0.28), inset 0 0 0 1px rgba(255,255,255,0.02)",
+              overflow: "hidden",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-          {phase >= 2 && (
             <div
               style={{
-                width: 46,
-                height: 46,
-                borderRadius: "50%",
-                background: C.green,
+                position: "absolute" as const,
+                inset: 0,
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.02) 100%)",
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute" as const,
+                top: 12,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 40,
+                height: 4,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.18)",
+                boxShadow: "0 0 6px rgba(255,255,255,0.1)",
+              }}
+            />
+            <div
+              style={{
+                width: "88%",
+                height: "86%",
+                borderRadius: 34,
+                background: "linear-gradient(180deg, #050607 0%, #111317 100%)",
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
+                overflow: "hidden",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                animation: "popIn .5s ease",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                padding: 12,
               }}
             >
-              <Check className="w-7 h-7" color="#fff" strokeWidth={3} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  color: "rgba(255,255,255,0.78)",
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                }}
+              >
+                <span>SMART SCALE</span>
+                <span>9:41</span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  color: "#F8FAFB",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    letterSpacing: "-0.03em",
+                  }}
+                >
+                  Synchronisierung abgeschlossen
+                </div>
+                <div
+                  style={{
+                    width: "100%",
+                    minHeight: 72,
+                    borderRadius: 26,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "rgba(255,255,255,0.7)",
+                          marginBottom: 2,
+                        }}
+                      >
+                        Letzte Messung
+                      </span>
+                      <span style={{ fontSize: 14, fontWeight: 600 }}>
+                        68,2 kg
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.1)",
+                        display: "grid",
+                        placeItems: "center",
+                      }}
+                    >
+                      <span style={{ color: "#6EE7B7", fontSize: 12 }}>
+                        +1.2%
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: 6,
+                      borderRadius: 999,
+                      background: "rgba(255,255,255,0.1)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "72%",
+                        height: "100%",
+                        background: "#6EE7B7",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  Sicher und privat
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  14:22
+                </span>
+              </div>
             </div>
-          )}
+            {phase >= 2 && (
+              <div
+                style={{
+                  position: "absolute" as const,
+                  top: -8,
+                  right: -8,
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.95)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.16)",
+                }}
+              >
+                <Check color="#0F766E" strokeWidth={3} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -5259,65 +5723,298 @@ function SuccessScreen({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 14,
-        background: C.bg,
+        gap: 30,
+        minHeight: "100vh",
+        padding: "40px 20px",
+        background: "#F7F8FA",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif",
       }}
     >
       <div
         style={{
-          width: 72,
-          height: 72,
-          borderRadius: "50%",
-          background: C.green,
+          width: "100%",
+          maxWidth: 540,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          animation:
-            "popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-      >
-        <Check className="w-9 h-9" strokeWidth={3} />
-      </div>
-      <div
-        style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: C.gray1,
-        }}
-      >
-        Erfolgreich gespeichert
-      </div>
-      <div style={{ fontSize: 14, color: C.gray2 }}>
-        {food.emoji} {food.name} wurde hinzugefügt
-      </div>
-      <div
-        style={{
-          width: 200,
-          height: 1,
-          background: C.border,
-          margin: "4px 0",
-        }}
-      />
-      <div style={{ fontSize: 13, color: C.gray3 }}>
-        Bereit für das nächste Lebensmittel
-      </div>
-      <div
-        style={{
-          width: 100,
-          height: 3,
-          background: C.border,
-          borderRadius: 2,
-          overflow: "hidden",
+          gap: 24,
+          padding: "34px 24px 26px",
+          background: "#FFFFFF",
+          borderRadius: 38,
+          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.08)",
         }}
       >
         <div
           style={{
-            height: "100%",
-            background: C.blue,
-            borderRadius: 2,
-            animation: "fillBar 2.5s linear forwards",
+            color: "#111827",
+            fontSize: 28,
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            textAlign: "center",
+            lineHeight: 1.1,
           }}
-        />
+        >
+          Synchronisierung abgeschlossen
+        </div>
+        <div
+          style={{
+            color: C.gray2,
+            fontSize: 15,
+            lineHeight: 1.7,
+            textAlign: "center",
+            maxWidth: 420,
+          }}
+        >
+          Deine Messung wurde erfolgreich in der App gespeichert.
+        </div>
+        <div
+          style={{
+            position: "relative" as const,
+            width: 340,
+            maxWidth: "100%",
+            paddingTop: 640 / 340 * 100 + "%",
+            overflow: "visible",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute" as const,
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute" as const,
+                top: "-16%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 96,
+                height: 96,
+                borderRadius: "50%",
+                background: "rgba(16, 185, 129, 0.18)",
+                boxShadow: "0 22px 50px rgba(16, 185, 129, 0.18)",
+                backdropFilter: "blur(18px)",
+                border: "1px solid rgba(16, 185, 129, 0.24)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 2,
+              }}
+            >
+              <Check
+                className="w-10 h-10"
+                color="#ffffff"
+                strokeWidth={3}
+              />
+            </div>
+            <div
+              style={{
+                position: "relative" as const,
+                width: "100%",
+                height: "100%",
+                maxWidth: 340,
+                maxHeight: 640,
+                borderRadius: 52,
+                background: "linear-gradient(180deg, #101214 0%, #070809 100%)",
+                boxShadow:
+                  "0 40px 80px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(255,255,255,0.04)",
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={iPhoneImage}
+                alt="Flagship phone"
+                style={{
+                  position: "absolute" as const,
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute" as const,
+                  top: 16,
+                  left: 14,
+                  right: 14,
+                  bottom: 18,
+                  borderRadius: 38,
+                  background: "rgba(15, 23, 42, 0.92)",
+                  boxShadow:
+                    "inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 18px 34px rgba(255,255,255,0.02)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "18px 18px 0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    color: "rgba(255,255,255,0.75)",
+                    fontSize: 11,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  <span>Smart Scale</span>
+                  <span>9:41</span>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    padding: "0 20px 20px",
+                    color: "#F9FAFB",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      lineHeight: 1.12,
+                      marginBottom: 10,
+                    }}
+                  >
+                    Synchronisierung abgeschlossen
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 15,
+                      lineHeight: 1.7,
+                      color: "rgba(255,255,255,0.78)",
+                      marginBottom: 24,
+                    }}
+                  >
+                    Deine Messung wurde erfolgreich in der App gespeichert.
+                  </div>
+                  <div
+                    style={{
+                      minHeight: 100,
+                      borderRadius: 30,
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      padding: 18,
+                      boxShadow:
+                        "inset 0 0 0 1px rgba(255,255,255,0.04)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.18em",
+                            color: "rgba(255,255,255,0.65)",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Aktuelle Messung
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 28,
+                            fontWeight: 700,
+                            color: "#F9FAFB",
+                          }}
+                        >
+                          68,2 kg
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: "50%",
+                          background: "rgba(34,197,94,0.15)",
+                          display: "grid",
+                          placeItems: "center",
+                        }}
+                      >
+                        <Check color="#22C55E" strokeWidth={3} />
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 6,
+                        borderRadius: 999,
+                        background: "rgba(255,255,255,0.12)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "68%",
+                          height: "100%",
+                          borderRadius: 999,
+                          background: "#22C55E",
+                        }}
+                      >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    padding: "0 18px 18px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 11,
+                  }}
+                >
+                  <span>Automatische Synchronisierung</span>
+                  <span>WLAN verbunden</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button
+          style={{
+            width: "100%",
+            maxWidth: 260,
+            padding: "16px 24px",
+            borderRadius: 999,
+            background:
+              "linear-gradient(135deg, #22C55E 0%, #10B981 100%)",
+            border: "none",
+            color: "#FFFFFF",
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            cursor: "pointer",
+            boxShadow: "0 18px 50px rgba(16, 185, 129, 0.26)",
+          }}
+        >
+          In App öffnen
+        </button>
       </div>
     </div>
   );
@@ -5372,21 +6069,35 @@ function StandbyScreen({ onWake }: { onWake: () => void }) {
         justifyContent: "space-between",
         padding: "32px 48px",
         cursor: "pointer",
-        background: "var(--c-standby-bg)",
+        background: C.bg,
       }}
     >
-      {/* Top: horizontal logo — adapts to light/dark via --logo-filter */}
-      <HorizontalLogo scale={0.44} themed />
-
-      {/* Center: clock */}
       <div
         style={{
+          flex: 1,
           display: "flex",
           flexDirection: "column",
+          justifyContent: "space-between",
           alignItems: "center",
-          gap: 8,
+          gap: 20,
+          paddingTop: 24,
         }}
       >
+        {/* Top: horizontal logo — same size as the Boot screen and centered with the rest */}
+        <div style={{ transform: "translateY(-20%)" }}>
+          <HorizontalLogo scale={4} themed />
+        </div>
+
+        {/* Center: clock */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            transform: "translateY(-60%)",
+          }}
+        >
         {/* Subtle ambient glow behind time — dark mode only visible */}
         <div
           style={{
@@ -5436,6 +6147,7 @@ function StandbyScreen({ onWake }: { onWake: () => void }) {
           </span>
         </div>
       </div>
+    </div>
 
       {/* Bottom */}
       <div
@@ -6853,7 +7565,7 @@ function ProfileScreenView({
                 width: 16,
                 height: 16,
                 borderRadius: "50%",
-                background: "#fff",
+                background: C.input,
                 position: "absolute" as const,
                 top: 2,
                 right: 2,
@@ -6872,10 +7584,18 @@ function SettingsScreen({
   onBack,
   appearance,
   setAppearance,
+  automaticDetection,
+  setAutomaticDetection,
+  tareOnStart,
+  setTareOnStart,
 }: {
   onBack: () => void;
   appearance: AppearanceSetting;
   setAppearance: (a: AppearanceSetting) => void;
+  automaticDetection: boolean;
+  setAutomaticDetection: (enabled: boolean) => void;
+  tareOnStart: boolean;
+  setTareOnStart: (enabled: boolean) => void;
 }) {
   const [activeNav, setActiveNav] = useState("Messung");
   const navItems = [
@@ -6907,8 +7627,12 @@ function SettingsScreen({
         {[
           {
             label: "Automatische Erkennung",
-            desc: "KI erkennt Lebensmittel per Kamera",
-            on: true,
+            desc: automaticDetection
+              ? "KI erkennt Lebensmittel automatisch per Kamera"
+              : "KI-Scan wird manuell gestartet",
+            on: automaticDetection,
+            onToggle: () =>
+              setAutomaticDetection(!automaticDetection),
           },
           {
             label: "Gewichtseinheit",
@@ -6917,10 +7641,13 @@ function SettingsScreen({
           },
           {
             label: "Tarieren beim Start",
-            desc: "Waage beim Einschalten nullen",
-            on: true,
+            desc: tareOnStart
+              ? "Waage wird beim Einschalten automatisch genullt"
+              : "Waage wird beim Einschalten nicht genullt",
+            on: tareOnStart,
+            onToggle: () => setTareOnStart(!tareOnStart),
           },
-        ].map(({ label, desc, on, toggle }) => (
+        ].map(({ label, desc, on, toggle, onToggle }) => (
           <div
             key={label}
             style={{
@@ -6948,7 +7675,12 @@ function SettingsScreen({
               </div>
             </div>
             {toggle !== false && (
-              <div
+              <button
+                type="button"
+                role="switch"
+                aria-label={label}
+                aria-checked={Boolean(on)}
+                onClick={onToggle}
                 style={{
                   width: 40,
                   height: 22,
@@ -6957,6 +7689,9 @@ function SettingsScreen({
                   position: "relative" as const,
                   cursor: "pointer",
                   flexShrink: 0,
+                  border: "none",
+                  padding: 0,
+                  transition: "background 0.2s ease",
                 }}
               >
                 <div
@@ -6964,14 +7699,14 @@ function SettingsScreen({
                     width: 18,
                     height: 18,
                     borderRadius: "50%",
-                    background: "#fff",
+                    background: C.input,
                     position: "absolute" as const,
                     top: 2,
                     ...(on ? { right: 2 } : { left: 2 }),
                     transition: "all 0.2s",
                   }}
                 />
-              </div>
+              </button>
             )}
           </div>
         ))}
@@ -7732,7 +8467,7 @@ function GuestModeDialog({
         style={{
           background: C.elevated,
           borderRadius: 20,
-          width: 460,
+          width: 650,
           padding: 20,
           display: "flex",
           flexDirection: "column",
@@ -7753,7 +8488,7 @@ function GuestModeDialog({
               color: C.gray1,
             }}
           >
-            Gastmodus wählen
+            Wie möchtest du wiegen?
           </span>
           <button
             onClick={onClose}
@@ -7809,7 +8544,7 @@ function GuestModeDialog({
                 color: C.gray1,
               }}
             >
-              KI-Gast
+              Mit KI wiegen
             </div>
             <div style={{ fontSize: 11, color: C.gray2 }}>
               Kalorien & Nährstoffe
@@ -7823,6 +8558,64 @@ function GuestModeDialog({
                 color: C.blue,
                 fontWeight: 600,
                 background: C.blueLt,
+                borderRadius: 6,
+                padding: "2px 8px",
+              }}
+            >
+              Nichts wird gespeichert
+            </div>
+          </button>
+          <button
+            onClick={() => onSelect("manual")}
+            style={{
+              flex: 1,
+              background: C.card,
+              border: `2px solid ${C.border}`,
+              borderRadius: 16,
+              padding: 16,
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 10,
+              textAlign: "center" as const,
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: C.blueLt,
+                color: C.blue,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <List className="w-5 h-5" />
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: C.gray1,
+              }}
+            >
+              Manuell auswählen
+            </div>
+            <div style={{ fontSize: 11, color: C.gray2 }}>
+              Lebensmittel selbst wählen
+            </div>
+            <div style={{ fontSize: 11, color: C.gray2 }}>
+              Anschließend wiegen
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                color: C.gray2,
+                fontWeight: 600,
+                background: C.muted,
                 borderRadius: 6,
                 padding: "2px 8px",
               }}
@@ -7866,7 +8659,7 @@ function GuestModeDialog({
                 color: C.gray1,
               }}
             >
-              Nur Waage
+              Nur wiegen
             </div>
             <div style={{ fontSize: 11, color: C.gray2 }}>
               Nur Gewicht
@@ -8035,9 +8828,11 @@ function CalorieGoalDialog({
 
 function PowerOffDialog({
   onConfirm,
+  onStandby,
   onClose,
 }: {
   onConfirm: () => void;
+  onStandby: () => void;
   onClose: () => void;
 }) {
   return (
@@ -8082,7 +8877,7 @@ function PowerOffDialog({
           <Power className="w-6 h-6" />
         </div>
         <div style={{ fontSize: 20, fontWeight: 800, color: C.gray1 }}>
-          Gerät ausschalten?
+          Energiemodus wählen
         </div>
         <div
           style={{
@@ -8092,14 +8887,26 @@ function PowerOffDialog({
             color: C.gray2,
           }}
         >
-          Nicht gespeicherte Messungen gehen dabei verloren.
+          Im Standby ist die Waage schnell wieder bereit. Beim Ausschalten
+          gehen nicht gespeicherte Messungen verloren.
         </div>
         <div style={{ display: "flex", gap: 10 }}>
-          <SecondaryBtn
-            label="Abbrechen"
-            onClick={onClose}
-            style={{ flex: 1 }}
-          />
+          <button
+            onClick={onStandby}
+            style={{
+              flex: 1,
+              minHeight: 44,
+              border: `1.5px solid ${C.blue}`,
+              borderRadius: 14,
+              background: C.blueLt,
+              color: C.blue,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Standby
+          </button>
           <button
             onClick={onConfirm}
             style={{
@@ -8117,6 +8924,11 @@ function PowerOffDialog({
             Ausschalten
           </button>
         </div>
+        <GhostBtn
+          label="Abbrechen"
+          onClick={onClose}
+          style={{ width: "100%", marginTop: 7 }}
+        />
       </div>
     </div>
   );
@@ -8272,13 +9084,21 @@ export default function App() {
   const [demoWeight, setDemoWeight] = useState(0);
   const [guestMode, setGuestMode] =
     useState<GuestMode>("smart");
+  const [guestReturnScreen, setGuestReturnScreen] = useState<
+    "home" | "returning-user"
+  >("returning-user");
   const [calorieGoal, setCalorieGoal] = useState(1600);
   const [weighMode, setWeighMode] = useState<WeighMode>("ki");
   const [selectedFood, setSelectedFood] =
     useState<FoodItem | null>(null);
   const [taraActive, setTaraActive] = useState(false);
+  const [automaticDetection, setAutomaticDetection] =
+    useState(true);
+  const [tareOnStart, setTareOnStart] = useState(true);
   const [isFirstUse, setIsFirstUse] = useState(false);
   const [onboardingActive, setOnboardingActive] =
+    useState(false);
+  const [showProfileWelcome, setShowProfileWelcome] =
     useState(false);
   const [demoLowConf, setDemoLowConf] = useState(false);
   const [secondsInactive, setSecondsInactive] = useState(0);
@@ -8311,6 +9131,12 @@ export default function App() {
     }, 1000);
     return () => clearInterval(interval);
   }, [screen]);
+
+  useEffect(() => {
+    if (!showProfileWelcome) return;
+    const timer = setTimeout(() => setShowProfileWelcome(false), 3500);
+    return () => clearTimeout(timer);
+  }, [showProfileWelcome]);
 
   const go = useCallback(
     (to: Screen, delay = 0) => {
@@ -8372,8 +9198,18 @@ export default function App() {
   const handleGuestModeSelect = (mode: GuestMode) => {
     setGuestMode(mode);
     closeDialog();
-    if (mode === "smart") go("food-detection");
-    else go("guest-weighing");
+    if (mode === "smart") {
+      setWeighMode("ki");
+      go("food-detection");
+    } else if (mode === "manual") {
+      setWeighMode("manual");
+      setSelectedFood(null);
+      go("home");
+      setTimeout(() => openDialog("food-select"), 260);
+    } else {
+      setWeighMode("scale-only");
+      go("guest-weighing");
+    }
   };
 
   const NAV_SHORTCUTS: { label: string; screen: Screen }[] = [
@@ -8397,6 +9233,7 @@ export default function App() {
         return (
           <BootScreen
             onDone={(first) => {
+              setTaraActive(tareOnStart);
               setOnboardingActive(first);
               go(
                 first ? "onboarding-welcome" : "returning-user",
@@ -8411,8 +9248,14 @@ export default function App() {
             step="welcome"
             onNext={() => go("onboarding-explain")}
             onSkip={() => {
+              setProfile(null);
+              setCurrentFood(null);
+              setSelectedFood(null);
+              setWeighMode("scale-only");
+              setGuestMode("scale-only");
+              setGuestReturnScreen("home");
               setOnboardingActive(false);
-              go("returning-user");
+              go("home");
             }}
           />
         );
@@ -8427,6 +9270,7 @@ export default function App() {
         return (
           <OnboardingScreen
             step="ready"
+            profile={profile}
             onNext={() => {
               setOnboardingActive(false);
               go("home");
@@ -8438,16 +9282,12 @@ export default function App() {
           <ReturningUserScreen
             onSelectProfile={(p) => {
               setProfile(p);
-              go("login");
+              go(p.pin ? "login" : "home");
             }}
             onCreate={() => go("create-profile")}
-            onScaleOnly={() => {
-              setProfile(null);
-              setGuestMode("scale-only");
-              go("guest-weighing");
-            }}
             onGuest={() => {
               setProfile(null);
+              setGuestReturnScreen("returning-user");
               openDialog("guest-mode");
             }}
           />
@@ -8458,7 +9298,7 @@ export default function App() {
             onBack={() => go("returning-user")}
             onSelect={(p) => {
               setProfile(p);
-              go("login");
+              go(p.pin ? "login" : "home");
             }}
             onCreate={() => go("create-profile")}
           />
@@ -8475,9 +9315,13 @@ export default function App() {
             }
             onCreate={(newProfile) => {
               setProfile(newProfile);
-              go(
-                onboardingActive ? "onboarding-ready" : "login",
-              );
+              if (onboardingActive) {
+                setOnboardingActive(false);
+                setShowProfileWelcome(true);
+                go("home");
+              } else {
+                go(newProfile.pin ? "login" : "home");
+              }
             }}
           />
         );
@@ -8493,7 +9337,10 @@ export default function App() {
         return (
           <HomeScreen
             profile={profile}
+            showProfileWelcome={showProfileWelcome}
+            onDismissProfileWelcome={() => setShowProfileWelcome(false)}
             weighMode={weighMode}
+            automaticDetection={automaticDetection}
             setWeighMode={(m) => {
               setWeighMode(m);
               if (m !== "manual") setSelectedFood(null);
@@ -8507,7 +9354,11 @@ export default function App() {
             onManualWeigh={() => {
               if (selectedFood) go("manual-weigh");
             }}
-            onScaleOnly={() => go("guest-weighing")}
+            onScaleOnly={() => {
+              setGuestMode("scale-only");
+              setGuestReturnScreen("home");
+              go("guest-weighing");
+            }}
             onHistory={() => go("history")}
             onProfile={() => go("profile-screen")}
             onSwitchProfile={() => go("profile-selection")}
@@ -8551,6 +9402,7 @@ export default function App() {
             food={currentFood}
             weight={demoWeight}
             profile={profile}
+            source={weighMode === "manual" ? "manual" : "ai"}
             onSave={() => go("tracking-animation")}
             onChangeFood={() => openDialog("food-select")}
             onCancel={() => go("home")}
@@ -8598,7 +9450,7 @@ export default function App() {
             food={currentFood}
             weight={demoWeight || 142}
             onDone={() =>
-              go(profile ? "home" : "returning-user")
+              go(profile ? "home" : guestReturnScreen)
             }
             onNew={() =>
               go(
@@ -8608,7 +9460,7 @@ export default function App() {
               )
             }
             onBack={() =>
-              go(profile ? "home" : "returning-user")
+              go(profile ? "home" : guestReturnScreen)
             }
             onLogin={() => {
               setProfile(null);
@@ -8651,6 +9503,13 @@ export default function App() {
             onBack={() => go("home")}
             appearance={appearance}
             setAppearance={setAppearance}
+            automaticDetection={automaticDetection}
+            setAutomaticDetection={setAutomaticDetection}
+            tareOnStart={tareOnStart}
+            setTareOnStart={(enabled) => {
+              setTareOnStart(enabled);
+              setTaraActive(enabled);
+            }}
           />
         );
       default:
@@ -8761,13 +9620,13 @@ export default function App() {
               ? C.blue
               : isDarkTheme
                 ? "rgba(255,255,255,0.1)"
-                : "#FFFFFF",
+                : C.card,
             border: isDarkTheme
               ? "1px solid rgba(255,255,255,0.2)"
               : "1px solid rgba(60,60,67,0.16)",
             borderRadius: 20,
             padding: "6px 16px",
-            color: isFirstUse || isDarkTheme ? "#fff" : "#1C1C1E",
+            color: isFirstUse || isDarkTheme ? "#fff" : C.gray1,
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -8782,13 +9641,13 @@ export default function App() {
               ? C.orange
               : isDarkTheme
                 ? "rgba(255,255,255,0.1)"
-                : "#FFFFFF",
+                : C.card,
             border: isDarkTheme
               ? "1px solid rgba(255,255,255,0.2)"
               : "1px solid rgba(60,60,67,0.16)",
             borderRadius: 20,
             padding: "6px 16px",
-            color: demoLowConf || isDarkTheme ? "#fff" : "#1C1C1E",
+            color: demoLowConf || isDarkTheme ? "#fff" : C.gray1,
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -8819,11 +9678,11 @@ export default function App() {
               style={{
                 background:
                   appearance === a
-                    ? "#FFFFFF"
+                    ? C.card
                     : "transparent",
                 color:
                   appearance === a
-                    ? "#111"
+                    ? C.gray1
                     : isDarkTheme
                       ? "rgba(255,255,255,0.6)"
                       : "rgba(28,28,30,0.62)",
@@ -8912,6 +9771,10 @@ export default function App() {
             {dialog === "power-off" && (
               <PowerOffDialog
                 onClose={closeDialog}
+                onStandby={() => {
+                  closeDialog();
+                  go("standby");
+                }}
                 onConfirm={() => {
                   closeDialog();
                   setCurrentFood(null);
