@@ -1,5 +1,14 @@
-node_modules
-dist
-.env
+# Node
+node_modules/
+
+# Python
+.venv/
+
+# Build
+dist/
+
+# macOS
 .DS_Store
-.vscode/settings.json
+
+# Environment
+.env
