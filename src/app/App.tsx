@@ -80,6 +80,7 @@ type Dialog =
   | "edit-goals"
   | "weight-entry"
   | "change-pin"
+  | "delete-profile"
   | "calorie-goal"
   | "guest-mode"
   | "power-off"
@@ -105,6 +106,7 @@ interface ProfileData {
     age: number;
     height: number;
     weight: number;
+    gender?: "female" | "male";
   };
   currentWeight?: number;
   targetWeight?: number;
@@ -941,9 +943,11 @@ function ContainerIcon({
 function StatusBar({
   light,
   onHome,
+  onPowerOff,
 }: {
   light?: boolean;
   onHome?: () => void;
+  onPowerOff?: () => void;
 }) {
   const [time, setTime] = useState(() => {
     const d = new Date();
@@ -1018,6 +1022,29 @@ function StatusBar({
         >
           87%
         </span>
+        {onPowerOff && (
+          <button
+            onClick={onPowerOff}
+            aria-label="Gerät ausschalten"
+            style={{
+              width: 22,
+              height: 22,
+              marginLeft: 3,
+              borderRadius: "50%",
+              border: "none",
+              background: "rgba(255,59,48,.12)",
+              color: C.red,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >
+            <Power className="w-3 h-3" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -2563,6 +2590,7 @@ function CreateProfileScreen({
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
+  const [gender, setGender] = useState<"female" | "male" | "">("");
   const [targetWeight, setTargetWeight] = useState("");
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [showAppReminder, setShowAppReminder] = useState(false);
@@ -2639,8 +2667,14 @@ function CreateProfileScreen({
       (goal === "Gewicht verlieren"
         ? targetWeightValue < weightValue
         : targetWeightValue > weightValue));
-  const maintenanceCalories = bodyDataValid
-    ? Math.round((10 * weightValue + 6.25 * heightValue - 5 * ageValue - 78) * 1.45)
+  const maintenanceCalories = bodyDataValid && gender
+    ? Math.round(
+        (10 * weightValue +
+          6.25 * heightValue -
+          5 * ageValue +
+          (gender === "male" ? 5 : -161)) *
+          1.45,
+      )
     : 0;
   const recommendedCalories = bodyDataValid
     ? Math.max(
@@ -2682,7 +2716,7 @@ function CreateProfileScreen({
     : calculatedMacroTargets;
   const targetsAvailable =
     Boolean(importedTargets) ||
-    (Boolean(goal) && bodyDataValid && targetWeightValid);
+    (Boolean(goal) && Boolean(gender) && bodyDataValid && targetWeightValid);
   const createProfileDraft = (pin?: string): ProfileData => ({
     id: `new-${Date.now()}`,
     name: name.trim(),
@@ -2695,7 +2729,12 @@ function CreateProfileScreen({
     ...(macroTargets ? { macroTargets } : {}),
     ...(bodyDataValid
       ? {
-          bodyData: { age: ageValue, height: heightValue, weight: weightValue },
+          bodyData: {
+            age: ageValue,
+            height: heightValue,
+            weight: weightValue,
+            ...(gender ? { gender } : {}),
+          },
           currentWeight: weightValue,
         }
       : {}),
@@ -2835,34 +2874,63 @@ function CreateProfileScreen({
           </span>
           <ChevronRight className="w-4 h-4" color={C.blue} />
         </button>
-        <div>
-          <label
-            style={{
-              fontSize: 12,
-              color: C.gray2,
-              fontWeight: 500,
-            }}
-          >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <label style={{ fontSize: 11, color: C.gray2, fontWeight: 500 }}>
             Dein Name
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Dein Name"
+              style={{
+                display: "block",
+                width: "100%",
+                height: 34,
+                marginTop: 4,
+                padding: "7px 9px",
+                borderRadius: 10,
+                border: `1.5px solid ${C.border}`,
+                fontSize: 12,
+                outline: "none",
+                fontFamily: "inherit",
+                boxSizing: "border-box" as const,
+              }}
+            />
           </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Dein Name"
-            style={{
-              display: "block",
-              width: "100%",
-              marginTop: 4,
-              padding: "9px 12px",
-              borderRadius: 10,
-              border: `1.5px solid ${C.border}`,
-              fontSize: 14,
-              outline: "none",
-              fontFamily: "inherit",
-              boxSizing: "border-box" as const,
-            }}
-          />
-
+          <div>
+            <div style={{ fontSize: 11, color: C.gray2, fontWeight: 500, marginBottom: 4 }}>
+              Geschlecht
+            </div>
+            <div
+              role="group"
+              aria-label="Geschlecht für die Kalorienberechnung"
+              style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}
+            >
+              {([
+                { value: "female", label: "Weiblich" },
+                { value: "male", label: "Männlich" },
+              ] as const).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setGender(option.value)}
+                  aria-pressed={gender === option.value}
+                  style={{
+                    height: 34,
+                    padding: "0 3px",
+                    borderRadius: 10,
+                    border: `1.5px solid ${gender === option.value ? C.blue : C.border}`,
+                    background: gender === option.value ? C.blueLt : C.elevated,
+                    color: gender === option.value ? C.blue : C.gray1,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Virtual keyboard is rendered globally by App; no local render here */}
         </div>
         <div
@@ -3075,17 +3143,57 @@ function CreateProfileScreen({
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: 14, minHeight: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 14, minHeight: 0 }}>
               <div
                 style={{
                   borderRadius: 16,
                   background: C.card,
                   border: `1px solid ${C.border}`,
-                  padding: 12,
+                  padding: "8px 12px 10px",
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 750, color: C.gray1, marginBottom: 8 }}>
-                  Körperdaten
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginBottom: 5,
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 750, color: C.gray1 }}>
+                    Körperdaten
+                  </div>
+                  <div
+                    role="group"
+                    aria-label="Geschlecht für die Kalorienberechnung"
+                    style={{ display: "flex", gap: 3 }}
+                  >
+                    {([
+                      { value: "female", label: "Weiblich" },
+                      { value: "male", label: "Männlich" },
+                    ] as const).map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setGender(option.value)}
+                        aria-pressed={gender === option.value}
+                        style={{
+                          height: 22,
+                          padding: "0 7px",
+                          borderRadius: 7,
+                          border: `1px solid ${gender === option.value ? C.blue : C.border}`,
+                          background: gender === option.value ? C.blueLt : C.elevated,
+                          color: gender === option.value ? C.blue : C.gray2,
+                          fontSize: 8,
+                          fontWeight: 750,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(${targetWeightRequired ? 4 : 3}, 1fr)`, gap: 5 }}>
                   {[
@@ -3199,10 +3307,26 @@ function CreateProfileScreen({
               </div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-              <label style={{ width: 210, fontSize: 9, fontWeight: 650, color: C.gray2 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "320px 1fr",
+                gap: 14,
+                alignItems: "end",
+              }}
+            >
+              <label
+                style={{
+                  width: "100%",
+                  padding: "0 12px",
+                  boxSizing: "border-box",
+                  fontSize: 9,
+                  fontWeight: 650,
+                  color: C.gray2,
+                }}
+              >
                 Kalorien manuell anpassen (optional)
-                <div style={{ display: "flex", marginTop: 3 }}>
+                <div style={{ display: "flex", marginTop: 7 }}>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -3232,21 +3356,26 @@ function CreateProfileScreen({
                   </span>
                 </div>
               </label>
-              <div style={{ flex: 1 }} />
-              <SecondaryBtn label="Zurück" onClick={() => setShowRecommendation(false)} style={{ minHeight: 36, padding: "7px 15px" }} />
-              <PrimaryBtn
-                label="Vorschlag übernehmen"
-                disabled={!targetsAvailable || targetCalories < 800 || targetCalories > 6000}
-                onClick={() => {
-                  setShowRecommendation(false);
-                  if (connectedApp) {
-                    continueToPinChoice();
-                  } else {
-                    setShowAppReminder(true);
-                  }
-                }}
-                style={{ minHeight: 36, padding: "7px 17px" }}
-              />
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10 }}>
+                <SecondaryBtn
+                  label="Zurück"
+                  onClick={() => setShowRecommendation(false)}
+                  style={{ minHeight: 36, padding: "7px 10px", fontSize: 10 }}
+                />
+                <PrimaryBtn
+                  label="Vorschlag übernehmen"
+                  disabled={!targetsAvailable || targetCalories < 800 || targetCalories > 6000}
+                  onClick={() => {
+                    setShowRecommendation(false);
+                    if (connectedApp) {
+                      continueToPinChoice();
+                    } else {
+                      setShowAppReminder(true);
+                    }
+                  }}
+                  style={{ minHeight: 36, padding: "7px 10px", fontSize: 10 }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -3535,6 +3664,11 @@ function CreateProfileScreen({
                   background: C.muted,
                   color: C.gray1,
                   cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  flexShrink: 0,
                 }}
               >
                 <X className="w-4 h-4" />
@@ -3642,6 +3776,11 @@ function CreateProfileScreen({
                   background: C.muted,
                   cursor: "pointer",
                   color: C.gray1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  flexShrink: 0,
                 }}
               >
                 <X className="w-4 h-4" />
@@ -4157,7 +4296,6 @@ function HomeScreen({
   onSwitchProfile,
   onLogout,
   onSettings,
-  onPowerOff,
 }: any) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [directWeight, setDirectWeight] = useState(0);
@@ -4415,24 +4553,6 @@ function HomeScreen({
             )}
           </div>
 
-          <button
-            onClick={onPowerOff}
-            aria-label="Gerät ausschalten"
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              border: "none",
-              background: C.muted,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: C.red,
-            }}
-          >
-            <Power className="w-3 h-3" />
-          </button>
         </div>
       </div>
 
@@ -8461,6 +8581,7 @@ function HistoryScreen({
 }) {
   const [query, setQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<HistoryItem | null>(null);
   const [selectedDate, setSelectedDate] = useState(localDateKey());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
@@ -9028,6 +9149,11 @@ function HistoryScreen({
                 background: C.muted,
                 color: C.gray1,
                 cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                flexShrink: 0,
               }}
             >
               <X className="w-4 h-4" />
@@ -9146,10 +9272,7 @@ function HistoryScreen({
               style={{ flex: 1 }}
             />
             <button
-              onClick={() => {
-                onDelete(selectedItem.id);
-                setSelectedItem(null);
-              }}
+              onClick={() => setDeleteCandidate(selectedItem)}
               style={{
                 width: 44,
                 borderRadius: 14,
@@ -9166,6 +9289,84 @@ function HistoryScreen({
             >
               <Trash2 className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      )}
+      {deleteCandidate && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 50,
+            background: "var(--c-overlay)",
+            backdropFilter: "blur(7px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 18,
+          }}
+        >
+          <div
+            style={{
+              width: 380,
+              maxWidth: "100%",
+              borderRadius: 22,
+              background: C.elevated,
+              border: `1px solid ${C.border}`,
+              boxShadow: "0 24px 70px rgba(0,0,0,.26)",
+              padding: 20,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                margin: "0 auto 10px",
+                borderRadius: "50%",
+                background: "rgba(255,59,48,.12)",
+                color: C.red,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 820, color: C.gray1 }}>
+              Lebensmittel wirklich löschen?
+            </div>
+            <div style={{ marginTop: 6, fontSize: 11, lineHeight: 1.45, color: C.gray2 }}>
+              „{deleteCandidate.name}“ wird dauerhaft aus deinem Verlauf entfernt.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginTop: 17 }}>
+              <SecondaryBtn
+                label="Abbrechen"
+                onClick={() => setDeleteCandidate(null)}
+                style={{ minHeight: 40, padding: "8px 12px", fontSize: 12 }}
+              />
+              <button
+                onClick={() => {
+                  onDelete(deleteCandidate.id);
+                  setSelectedItem(null);
+                  setDeleteCandidate(null);
+                }}
+                style={{
+                  minHeight: 40,
+                  border: "none",
+                  borderRadius: 13,
+                  background: C.red,
+                  color: "#fff",
+                  padding: "8px 12px",
+                  fontFamily: "inherit",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Löschen
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -9186,6 +9387,7 @@ function ProfileScreenView({
   onChangePin,
   onProfileSelect,
   onLogout,
+  onDelete,
 }: {
   profile: ProfileData;
   calorieGoal: number;
@@ -9197,6 +9399,7 @@ function ProfileScreenView({
   onChangePin: () => void;
   onProfileSelect: () => void;
   onLogout: () => void;
+  onDelete: () => void;
 }) {
   const consumed = historyItems.filter(
     (i) => i.date === "Heute",
@@ -9223,6 +9426,9 @@ function ProfileScreenView({
           display: "flex",
           flexDirection: "column",
           gap: 11,
+          minHeight: 0,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
         }}
       >
         <button
@@ -9279,7 +9485,7 @@ function ProfileScreenView({
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 5,
+            gap: 4,
           }}
         >
           {[
@@ -9309,6 +9515,12 @@ function ProfileScreenView({
               onClick: onLogout,
               red: true,
             },
+            {
+              icon: <Trash2 className="w-3.5 h-3.5" />,
+              label: "Profil löschen",
+              onClick: onDelete,
+              red: true,
+            },
           ].map(({ icon, label, onClick, red }) => (
             <button
               key={label}
@@ -9320,9 +9532,9 @@ function ProfileScreenView({
                 background: C.muted,
                 border: "none",
                 borderRadius: 10,
-                padding: "7px 11px",
+                padding: "5px 9px",
                 cursor: "pointer",
-                fontSize: 13,
+                fontSize: 12,
                 color: red ? C.red : C.gray1,
                 fontWeight: 500,
               }}
@@ -11562,6 +11774,91 @@ function CalorieGoalDialog({
   );
 }
 
+function DeleteProfileDialog({
+  profile,
+  onConfirm,
+  onClose,
+}: {
+  profile: ProfileData;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute" as const,
+        inset: 0,
+        zIndex: 230,
+        background: "var(--c-overlay)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          width: 390,
+          maxWidth: "100%",
+          borderRadius: 22,
+          background: C.elevated,
+          border: `1px solid ${C.border}`,
+          boxShadow: "0 24px 70px rgba(0,0,0,.26)",
+          padding: 20,
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            margin: "0 auto 10px",
+            borderRadius: "50%",
+            background: "rgba(255,59,48,.12)",
+            color: C.red,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Trash2 className="w-5 h-5" />
+        </div>
+        <div style={{ fontSize: 19, fontWeight: 820, color: C.gray1 }}>
+          Profil wirklich löschen?
+        </div>
+        <div style={{ marginTop: 6, fontSize: 11, lineHeight: 1.45, color: C.gray2 }}>
+          Das Profil „{profile.name}“ und der zugehörige Verlauf werden dauerhaft entfernt.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginTop: 17 }}>
+          <SecondaryBtn
+            label="Abbrechen"
+            onClick={onClose}
+            style={{ minHeight: 40, padding: "8px 12px", fontSize: 12 }}
+          />
+          <button
+            onClick={onConfirm}
+            style={{
+              minHeight: 40,
+              border: "none",
+              borderRadius: 13,
+              background: C.red,
+              color: "#fff",
+              padding: "8px 12px",
+              fontFamily: "inherit",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Profil löschen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PowerOffDialog({
   onConfirm,
   onStandby,
@@ -12378,7 +12675,6 @@ export default function App() {
               go("returning-user");
             }}
             onSettings={() => go("settings")}
-            onPowerOff={() => openDialog("power-off")}
           />
         );
       case "manual-weigh":
@@ -12545,6 +12841,7 @@ export default function App() {
             onOpenWeightEntry={() => openDialog("weight-entry")}
             onChangePin={() => openDialog("change-pin")}
             onProfileSelect={() => go("profile-selection")}
+            onDelete={() => openDialog("delete-profile")}
             onLogout={() => {
               setProfile(null);
               setCurrentFood(null);
@@ -12826,6 +13123,7 @@ export default function App() {
         >
           {screen !== "standby" && screen !== "powered-off" && (
             <StatusBar
+              onPowerOff={() => openDialog("power-off")}
               onHome={
                 showGlobalHome
                   ? () => {
@@ -12929,6 +13227,31 @@ export default function App() {
                   setProfile((current) =>
                     current ? { ...current, pin } : current,
                   );
+                }}
+                onClose={closeDialog}
+              />
+            )}
+            {dialog === "delete-profile" && profile && (
+              <DeleteProfileDialog
+                profile={profile}
+                onConfirm={() => {
+                  const profileId = profile.id;
+                  const hasOtherProfiles = profiles.some(
+                    (item) => item.id !== profileId,
+                  );
+                  setDialog(null);
+                  setProfile(null);
+                  setProfiles((current) =>
+                    current.filter((item) => item.id !== profileId),
+                  );
+                  setHistoryByProfile((current) => {
+                    const next = { ...current };
+                    delete next[profileId];
+                    return next;
+                  });
+                  setCurrentFood(null);
+                  setSelectedFood(null);
+                  go(hasOtherProfiles ? "returning-user" : "profile-selection");
                 }}
                 onClose={closeDialog}
               />
